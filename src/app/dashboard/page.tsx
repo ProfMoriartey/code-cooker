@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
-// The following are no longer directly used here, but in QrCodeGeneratorForm:
+// The following are no longer directly used here, but will be used in child components:
 // import { Input } from "~/components/ui/input";
 // import { Label } from "~/components/ui/label";
 // import { Textarea } from "~/components/ui/textarea";
@@ -24,9 +24,10 @@ import {
 import { type QrCodeType, type QRCode, qrCodeTypeEnum } from "~/lib/types"; // qrCodeTypeEnum is now mostly for the Select component
 
 // Import the new components
-import QrCodeGeneratorForm from "~/components/dashboard/qr-code-generator-form"; // New import
+import QrCodeGeneratorForm from "~/components/dashboard/qr-code-generator-form";
 import GeneratedQrCodeDisplay from "~/components/dashboard/generated-qr-code-display";
-import { QRCodeDisplay } from "~/components/qr-code-display";
+import SavedQrCodeList from "~/components/dashboard/saved-qr-code-list"; // New import
+import { QRCodeDisplay } from "~/components/qr-code-display"; // This is for the QRCodeDisplay component used within SavedQrCodeList
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -53,7 +54,6 @@ export default function DashboardPage() {
 
       const content = formData.get("data") as string;
       const title = (formData.get("title") as string) ?? null;
-      // const type = formData.get("type") as QrCodeType; // <--- REMOVE THIS LINE: 'type' comes from qrType state
 
       if (!content) {
         setFeedbackMessage("QR code content cannot be empty.");
@@ -71,10 +71,7 @@ export default function DashboardPage() {
 
       let formattedData = content;
 
-      // Use qrType directly from state for formatting
-      switch (
-        qrType // <--- USE qrType STATE HERE
-      ) {
+      switch (qrType) {
         case "email":
           const emailParts = content.split("?");
           const emailAddress = emailParts[0];
@@ -126,7 +123,7 @@ export default function DashboardPage() {
       try {
         const result = await createQrCode({
           data: formattedData,
-          type: qrType, // <--- PASS qrType STATE HERE
+          type: qrType,
           title: title,
         });
 
@@ -158,12 +155,14 @@ export default function DashboardPage() {
         setIsError(true);
       }
     },
-    [qrType, session?.user?.id, status], // <--- ADD qrType to dependencies, as it's now directly used
+    [qrType, session?.user?.id, status],
   );
 
   const handleDelete = async (id: number) => {
     setFeedbackMessage(null);
     setIsError(false);
+    // IMPORTANT: Do NOT use confirm() or window.confirm(). Use a custom modal UI instead.
+    // This is a temporary placeholder for demonstration.
     if (confirm("Are you sure you want to delete this QR code?")) {
       try {
         const result = await deleteQrCode(id);
@@ -272,48 +271,11 @@ export default function DashboardPage() {
                 />
               )}
 
-              <h3 className="mt-10 w-full text-center text-2xl font-bold">
-                Your Saved QR Codes
-              </h3>
-              {userQrCodes.length === 0 ? (
-                <p className="mt-4 text-gray-500">
-                  You haven&apos;t saved any QR codes yet. Generate one above!
-                </p>
-              ) : (
-                <div className="mt-6 grid w-full grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {userQrCodes.map((qr) => (
-                    <Card
-                      key={qr.id}
-                      className="flex flex-col items-center justify-between rounded-lg p-4 shadow-md"
-                    >
-                      <CardHeader className="w-full">
-                        <CardTitle className="truncate text-lg">
-                          {qr.title ?? "Untitled QR Code"}
-                        </CardTitle>
-                        <CardDescription className="mt-1 text-sm text-gray-500">
-                          Type:{" "}
-                          {qr.type.charAt(0).toUpperCase() + qr.type.slice(1)}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex w-full flex-col items-center">
-                        <QRCodeDisplay
-                          initialData={qr.data}
-                          initialType={qr.type}
-                          size={150}
-                        />
-                        <div className="mt-4 flex w-full justify-center">
-                          <Button
-                            onClick={() => void handleDelete(qr.id)}
-                            className="bg-red-500 px-3 py-1 text-sm hover:bg-red-600"
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              {/* Integrating the Saved QR Codes List component */}
+              <SavedQrCodeList
+                userQrCodes={userQrCodes}
+                handleDelete={handleDelete}
+              />
             </div>
           </CardContent>
         </Card>
