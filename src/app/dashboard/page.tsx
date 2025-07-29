@@ -6,11 +6,14 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
+// The following are no longer directly used here, but in QrCodeGeneratorForm:
+// import { Input } from "~/components/ui/input";
+// import { Label } from "~/components/ui/label";
+// import { Textarea } from "~/components/ui/textarea";
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+// import { useFormStatus } from "react-dom";
+
 import { createQrCode, getUserQrCodes, deleteQrCode } from "~/app/actions";
-import { QRCodeDisplay } from "~/components/qr-code-display";
 import {
   Card,
   CardContent,
@@ -18,25 +21,12 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import { useFormStatus } from "react-dom";
-import { type QrCodeType, type QRCode, qrCodeTypeEnum } from "~/lib/types";
+import { type QrCodeType, type QRCode, qrCodeTypeEnum } from "~/lib/types"; // qrCodeTypeEnum is now mostly for the Select component
 
-// A helper component for the submit button to show loading state
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="mt-4 w-full">
-      {pending ? "Generating..." : "Generate & Save QR Code"}
-    </Button>
-  );
-}
+// Import the new components
+import QrCodeGeneratorForm from "~/components/dashboard/qr-code-generator-form"; // New import
+import GeneratedQrCodeDisplay from "~/components/dashboard/generated-qr-code-display";
+import { QRCodeDisplay } from "~/components/qr-code-display";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -63,7 +53,7 @@ export default function DashboardPage() {
 
       const content = formData.get("data") as string;
       const title = (formData.get("title") as string) ?? null;
-      const type = formData.get("type") as QrCodeType;
+      // const type = formData.get("type") as QrCodeType; // <--- REMOVE THIS LINE: 'type' comes from qrType state
 
       if (!content) {
         setFeedbackMessage("QR code content cannot be empty.");
@@ -81,7 +71,10 @@ export default function DashboardPage() {
 
       let formattedData = content;
 
-      switch (type) {
+      // Use qrType directly from state for formatting
+      switch (
+        qrType // <--- USE qrType STATE HERE
+      ) {
         case "email":
           const emailParts = content.split("?");
           const emailAddress = emailParts[0];
@@ -133,7 +126,7 @@ export default function DashboardPage() {
       try {
         const result = await createQrCode({
           data: formattedData,
-          type: type,
+          type: qrType, // <--- PASS qrType STATE HERE
           title: title,
         });
 
@@ -165,7 +158,7 @@ export default function DashboardPage() {
         setIsError(true);
       }
     },
-    [session?.user?.id, status], // Removed qrType from dependencies
+    [qrType, session?.user?.id, status], // <--- ADD qrType to dependencies, as it's now directly used
   );
 
   const handleDelete = async (id: number) => {
@@ -258,67 +251,25 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {feedbackMessage && (
-                <div
-                  className={`mt-4 w-full rounded-md p-3 text-center ${isError ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
-                >
-                  {feedbackMessage}
-                </div>
-              )}
+              {/* Integrating the QR Code Generator Form component */}
+              <QrCodeGeneratorForm
+                qrContent={qrContent}
+                setQrContent={setQrContent}
+                qrTitle={qrTitle}
+                setQrTitle={setQrTitle}
+                qrType={qrType}
+                setQrType={handleQrTypeChange} // Use the specific handler
+                handleSubmit={handleSubmit}
+                feedbackMessage={feedbackMessage}
+                isError={isError}
+              />
 
-              <form action={handleSubmit} className="w-full space-y-4">
-                <div>
-                  <Label htmlFor="title">QR Code Title (Optional)</Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    type="text"
-                    placeholder="e.g., My Website Link"
-                    value={qrTitle}
-                    onChange={(e) => setQrTitle(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="data">Content for QR Code</Label>
-                  <Textarea
-                    id="data"
-                    name="data"
-                    placeholder="Enter text, a URL (e.g., https://example.com), email, phone number, etc."
-                    value={qrContent}
-                    onChange={(e) => setQrContent(e.target.value)}
-                    className="mt-1 min-h-[100px]"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="type">QR Code Type</Label>
-                  <Select value={qrType} onValueChange={handleQrTypeChange}>
-                    <SelectTrigger className="mt-1 w-full">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {qrCodeTypeEnum.map((typeOption) => (
-                        <SelectItem key={typeOption} value={typeOption}>
-                          {typeOption.charAt(0).toUpperCase() +
-                            typeOption.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <SubmitButton />
-              </form>
-
+              {/* Integrating the Newly Generated QR Code Display component */}
               {generatedQrData && (
-                <div className="mt-8 w-full rounded-lg border bg-gray-50 p-4 shadow-inner">
-                  <h3 className="mb-4 text-center text-xl font-semibold">
-                    Newly Generated QR Code:
-                  </h3>
-                  <QRCodeDisplay
-                    initialData={generatedQrData}
-                    initialType={generatedQrType}
-                  />
-                </div>
+                <GeneratedQrCodeDisplay
+                  generatedQrData={generatedQrData}
+                  generatedQrType={generatedQrType}
+                />
               )}
 
               <h3 className="mt-10 w-full text-center text-2xl font-bold">

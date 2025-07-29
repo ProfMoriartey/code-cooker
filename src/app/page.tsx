@@ -59,7 +59,7 @@ export default function HomePage() {
 
       const content = formData.get("data") as string;
       const title = (formData.get("title") as string) ?? null;
-      const type = formData.get("type") as QrCodeType;
+      // const type = formData.get("type") as QrCodeType; // REMOVED THIS LINE
 
       if (!content) {
         setFeedbackMessage("QR code content cannot be empty.");
@@ -77,7 +77,10 @@ export default function HomePage() {
 
       let formattedData = content;
 
-      switch (type) {
+      // Use qrType directly from state
+      switch (
+        qrType // CHANGED 'type' to 'qrType' here
+      ) {
         case "email":
           const emailParts = content.split("?");
           const emailAddress = emailParts[0];
@@ -129,7 +132,7 @@ export default function HomePage() {
       try {
         const result = await createQrCode({
           data: formattedData,
-          type: type,
+          type: qrType, // Use qrType directly from state
           title: title,
         });
 
@@ -161,7 +164,7 @@ export default function HomePage() {
         setIsError(true);
       }
     },
-    [session?.user?.id], // Removed 'status' from dependencies as it's not used in the callback
+    [qrType, session?.user?.id], // Added qrType to dependencies to ensure callback re-creates when qrType changes
   );
 
   const handleDelete = async (id: number) => {
