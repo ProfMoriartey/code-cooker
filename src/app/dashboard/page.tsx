@@ -6,12 +6,6 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
-// The following are no longer directly used here, but will be used in child components:
-// import { Input } from "~/components/ui/input";
-// import { Label } from "~/components/ui/label";
-// import { Textarea } from "~/components/ui/textarea";
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-// import { useFormStatus } from "react-dom";
 
 import { createQrCode, getUserQrCodes, deleteQrCode } from "~/app/actions";
 import {
@@ -21,13 +15,12 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { type QrCodeType, type QRCode, qrCodeTypeEnum } from "~/lib/types"; // qrCodeTypeEnum is now mostly for the Select component
+import { type QrCodeType, type QRCode } from "~/lib/types"; // qrCodeTypeEnum is now mostly for the Select component
 
 // Import the new components
 import QrCodeGeneratorForm from "~/components/dashboard/qr-code-generator-form";
 import GeneratedQrCodeDisplay from "~/components/dashboard/generated-qr-code-display";
 import SavedQrCodeList from "~/components/dashboard/saved-qr-code-list"; // New import
-import { QRCodeDisplay } from "~/components/qr-code-display"; // This is for the QRCodeDisplay component used within SavedQrCodeList
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();

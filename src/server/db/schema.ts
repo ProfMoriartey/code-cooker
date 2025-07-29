@@ -7,7 +7,6 @@ import {
   text,
   timestamp,
   integer, // Added for expires_at in accounts/sessions
-  boolean, // For emailVerified
   primaryKey, // For combined primary keys
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm"; // For defining table relationships

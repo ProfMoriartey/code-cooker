@@ -3,7 +3,6 @@
 
 import { QRCodeDisplay } from "~/components/qr-code-display"; // Assuming QRCodeDisplay exists
 import { type QrCodeType } from "~/lib/types"; // Import QrCodeType
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"; // Assuming Card components are available
 
 interface GeneratedQrCodeDisplayProps {
   generatedQrData: string;

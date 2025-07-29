@@ -4,7 +4,7 @@
 import { auth } from "~/server/auth"; // Import the auth function
 import { db } from "~/server/db"; // Import your Drizzle database instance
 import { qrCodes } from "~/server/db/schema"; // Import your QR codes schema
-import { eq, desc } from "drizzle-orm"; // Import Drizzle ORM functions (desc is now used explicitly)
+import { eq } from "drizzle-orm"; // Import Drizzle ORM functions (desc is now used explicitly)
 import { type QrCodeType, type QRCode } from "~/lib/types"; // Import shared types
 
 // Define the input type for creating a QR code
