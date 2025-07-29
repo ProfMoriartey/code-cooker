@@ -4,7 +4,7 @@
 import { auth } from "~/server/auth"; // Import the auth function
 import { db } from "~/server/db"; // Import your Drizzle database instance
 import { qrCodes } from "~/server/db/schema"; // Import your QR codes schema
-import { eq, desc } from "drizzle-orm"; // Import Drizzle ORM functions
+import { eq, desc } from "drizzle-orm"; // Import Drizzle ORM functions (desc is now used explicitly)
 import { type QrCodeType, type QRCode } from "~/lib/types"; // Import shared types
 
 // Define the input type for creating a QR code
@@ -18,7 +18,7 @@ interface CreateQrCodeInput {
 export async function createQrCode(input: CreateQrCodeInput) {
   const session = await auth();
   if (!session?.user?.id) {
-    return { success: false, error: "Not authenticated." };
+    return { success: false, error: "Not authenticated.", details: null, qrCode: null };
   }
 
   try {
@@ -26,28 +26,30 @@ export async function createQrCode(input: CreateQrCodeInput) {
       .insert(qrCodes)
       .values({
         userId: session.user.id,
-        data: input.data, // Use input.data
+        data: input.data,
         type: input.type,
         title: input.title,
       })
-      .returning(); // Use .returning() to get the inserted record
+      .returning();
 
     if (!newQrCode) {
-      return { success: false, error: "Failed to create QR code.", qrCode: null };
+      return { success: false, error: "Failed to create QR code.", details: null, qrCode: null };
     }
 
-    // Convert Drizzle's `createdAt` and `updatedAt` (which might be raw Date objects) to serializable format if needed
-    // For type safety, explicitly cast to QRCode if the returned type is slightly different
     const resultQrCode: QRCode = {
       ...newQrCode,
-      createdAt: newQrCode.createdAt ? new Date(newQrCode.createdAt) : new Date(),
-      updatedAt: newQrCode.updatedAt ? new Date(newQrCode.updatedAt) : new Date(),
-    } as QRCode; // Explicitly cast to QRCode to match interface
+      createdAt: new Date(newQrCode.createdAt),
+      updatedAt: new Date(newQrCode.updatedAt),
+    };
 
-    return { success: true, qrCode: resultQrCode };
-  } catch (error: any) {
+    return { success: true, qrCode: resultQrCode, error: null, details: null };
+  } catch (error: unknown) { // Use 'unknown' instead of 'any'
     console.error("Database error creating QR code:", error);
-    return { success: false, error: "Database error.", details: error.message };
+    let errorMessage = "An unknown database error occurred.";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return { success: false, error: "Database error.", details: errorMessage, qrCode: null };
   }
 }
 
@@ -61,10 +63,9 @@ export async function getUserQrCodes(): Promise<QRCode[]> {
   try {
     const codes = await db.query.qrCodes.findMany({
       where: eq(qrCodes.userId, session.user.id),
-      orderBy: (qrCodesTable, { desc }) => [desc(qrCodesTable.createdAt)], // Use qrCodesTable for column access
+      orderBy: (table, { desc: orderByDesc }) => [orderByDesc(table.createdAt)], // Use desc as orderByDesc
     });
 
-    // Ensure dates are correctly typed as Date objects for the client
     return codes.map(qr => ({
       ...qr,
       createdAt: new Date(qr.createdAt),
@@ -77,7 +78,7 @@ export async function getUserQrCodes(): Promise<QRCode[]> {
 }
 
 // Server Action to delete a QR code by ID
-export async function deleteQrCode(id: number) { // Ensure id is number
+export async function deleteQrCode(id: number) {
   const session = await auth();
   if (!session?.user?.id) {
     return { success: false, message: "Not authenticated." };
@@ -87,15 +88,19 @@ export async function deleteQrCode(id: number) { // Ensure id is number
     const result = await db
       .delete(qrCodes)
       .where(eq(qrCodes.id, id))
-      .returning({ id: qrCodes.id }); // Return the ID of the deleted record
+      .returning({ id: qrCodes.id });
 
     if (result.length === 0) {
       return { success: false, message: "QR Code not found or you don't have permission to delete it." };
     }
 
     return { success: true, message: "QR Code deleted successfully!" };
-  } catch (error) {
+  } catch (error: unknown) { // Use 'unknown' instead of 'any'
     console.error("Database error deleting QR code:", error);
-    return { success: false, message: "Database error during deletion." };
+    let errorMessage = "An unknown database error occurred during deletion.";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return { success: false, message: errorMessage };
   }
 }

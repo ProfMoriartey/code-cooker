@@ -3,31 +3,32 @@ import { sql } from "drizzle-orm";
 import {
   pgTableCreator,
   serial,
-  timestamp,
   varchar,
   text,
-  pgEnum, // Import pgEnum
-  primaryKey, // Import primaryKey for compound keys
+  timestamp,
+  integer, // Added for expires_at in accounts/sessions
+  boolean, // For emailVerified
+  primaryKey, // For combined primary keys
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm"; // For defining table relationships
 
 /**
  * This is an example of how to use the `pgTableCreator` helper.
- * It creates a new table creator with a custom `schema` feature that
- * protects against collisions in different schemas and databases.
  *
- * @see https://drizzle.team/docs/goodies#pgtablecreator
+ * `pgTableCreator` can no longer be a global variable due to a Drizzle bug
+ * on the latest version and Next.js.
+ *
+ * @see https://github.com/drizzle-team/drizzle-orm/issues/1169
  */
-export const createTable = pgTableCreator((name) => `qr_generator_${name}`);
+export const createTable = pgTableCreator((name) => `qrgen_${name}`);
 
-// --- NextAuth.js Drizzle Schema (Keep as is, provided by T3 stack) ---
+// --- Auth.js Schema (from next-auth/drizzle-adapter expectations) ---
+// These tables are typically created and managed by DrizzleAdapter for NextAuth.js
 export const users = createTable("user", {
   id: varchar("id", { length: 255 }).notNull().primaryKey(),
   name: varchar("name", { length: 255 }),
   email: varchar("email", { length: 255 }).notNull(),
-  emailVerified: timestamp("emailVerified", {
-    mode: "date",
-    withTimezone: true,
-  }).default(sql`CURRENT_TIMESTAMP`),
+  emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: varchar("image", { length: 255 }),
 });
 
@@ -37,12 +38,12 @@ export const accounts = createTable(
     userId: varchar("userId", { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    type: varchar("type", { length: 255 }).$type<"oauth" | "oidc" | "email">().notNull(),
+    type: varchar("type", { length: 255 }).notNull(),
     provider: varchar("provider", { length: 255 }).notNull(),
     providerAccountId: varchar("providerAccountId", { length: 255 }).notNull(),
     refresh_token: text("refresh_token"),
     access_token: text("access_token"),
-    expires_at: timestamp("expires_at", { mode: "date" }),
+    expires_at: integer("expires_at"), // Changed from timestamp to integer
     token_type: varchar("token_type", { length: 255 }),
     scope: varchar("scope", { length: 255 }),
     id_token: text("id_token"),
@@ -56,7 +57,9 @@ export const accounts = createTable(
 );
 
 export const sessions = createTable("session", {
-  sessionToken: varchar("sessionToken", { length: 255 }).notNull().primaryKey(),
+  sessionToken: varchar("sessionToken", { length: 255 })
+    .notNull()
+    .primaryKey(),
   userId: varchar("userId", { length: 255 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -75,23 +78,46 @@ export const verificationTokens = createTable(
   }),
 );
 
-// --- QR Code Specific Schema ---
-// Define an enum for QR code types
-export const qrCodeTypeEnum = pgEnum("qr_code_type", ["text", "url", "email", "phone", "sms", "wifi"]);
+// --- Your Application Schema ---
+export const qrCodeTypeEnum = [
+  "text",
+  "url",
+  "email",
+  "phone",
+  "sms",
+  "wifi",
+] as const;
 
 export const qrCodes = createTable("qr_codes", {
   id: serial("id").primaryKey(),
   userId: varchar("userId", { length: 255 })
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }), // Link to the user who created it
-  title: varchar("title", { length: 255 }), // Optional title for the QR code
-  data: text("data").notNull(), // The actual content encoded in the QR code
-  type: qrCodeTypeEnum("type").notNull().default("text"), // The type of data (e.g., 'url', 'text')
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().$onUpdate(() => new Date()).notNull(),
+    .references(() => users.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 255 }),
+  data: text("data").notNull(), // The actual content of the QR code
+  type: varchar("type", { length: 50, enum: qrCodeTypeEnum }).notNull(), // Enum for QR code type
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
 });
 
-// Infer the type from the qrCodes table definition and export it
+// Define relationships (optional, but good practice for findMany with relations)
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  sessions: many(sessions),
+  qrCodes: many(qrCodes), // A user can have many QR codes
+}));
+
+export const qrCodesRelations = relations(qrCodes, ({ one }) => ({
+  user: one(users, {
+    fields: [qrCodes.userId],
+    references: [users.id],
+  }),
+}));
+
+// Infer types from Drizzle schema for use in application
 export type QRCode = typeof qrCodes.$inferSelect;
-// Infer the insert type
 export type NewQRCode = typeof qrCodes.$inferInsert;

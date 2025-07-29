@@ -1,13 +1,13 @@
 // src/app/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import { createQrCode, getUserQrCodes, deleteQrCode } from "~/app/actions"; // Import actions
+import { createQrCode, getUserQrCodes, deleteQrCode } from "~/app/actions";
 import { QRCodeDisplay } from "~/components/qr-code-display";
 import {
   Card,
@@ -24,8 +24,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { useFormStatus } from "react-dom";
-import { qrCodeTypeEnum } from "~/server/db/schema"; // Import the enum from your schema
-import type { QRCode } from "~/server/db/schema"; // Import the QRCode type if you added it in schema.ts
+import { qrCodeTypeEnum, type QrCodeType, type QRCode } from "~/lib/types";
 
 // A helper component for the submit button to show loading state
 function SubmitButton() {
@@ -40,15 +39,155 @@ function SubmitButton() {
 export default function HomePage() {
   const { data: session, status } = useSession();
   const [qrContent, setQrContent] = useState("");
-  const [qrType, setQrType] =
-    useState<(typeof qrCodeTypeEnum.enumValues)[number]>("text");
+  const [qrType, setQrType] = useState<QrCodeType>("text");
   const [qrTitle, setQrTitle] = useState("");
   const [generatedQrData, setGeneratedQrData] = useState("");
-  const [generatedQrType, setGeneratedQrType] =
-    useState<(typeof qrCodeTypeEnum.enumValues)[number]>("text");
-  const [userQrCodes, setUserQrCodes] = useState<QRCode[]>([]); // Use the imported QRCode type
+  const [generatedQrType, setGeneratedQrType] = useState<QrCodeType>("text");
+  const [userQrCodes, setUserQrCodes] = useState<QRCode[]>([]);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
+
+  // Define a local handler for onValueChange to correctly type the value
+  const handleQrTypeChange = useCallback((value: string) => {
+    setQrType(value as QrCodeType);
+  }, []); // Empty dependency array as setQrType is stable
+
+  const handleSubmit = useCallback(
+    async (formData: FormData) => {
+      setFeedbackMessage(null);
+      setIsError(false);
+
+      const content = formData.get("data") as string;
+      const title = (formData.get("title") as string) ?? null;
+      const type = formData.get("type") as QrCodeType;
+
+      if (!content) {
+        setFeedbackMessage("QR code content cannot be empty.");
+        setIsError(true);
+        return;
+      }
+
+      if (!session?.user?.id) {
+        setFeedbackMessage(
+          "You must be signed in to generate and save QR codes.",
+        );
+        setIsError(true);
+        return;
+      }
+
+      let formattedData = content;
+
+      switch (type) {
+        case "email":
+          const emailParts = content.split("?");
+          const emailAddress = emailParts[0];
+          const emailParams = emailParts.length > 1 ? `?${emailParts[1]}` : "";
+          formattedData = `mailto:${emailAddress}${emailParams}`;
+          break;
+        case "phone":
+          formattedData = `tel:${content.replace(/\D/g, "")}`;
+          break;
+        case "sms":
+          const smsIndex = content.indexOf("?");
+          const smsNumber = content
+            .substring(0, smsIndex === -1 ? content.length : smsIndex)
+            .replace(/\D/g, "");
+          const smsMessage =
+            smsIndex !== -1 ? `?${content.substring(smsIndex + 1)}` : "";
+          formattedData = `sms:${smsNumber}${smsMessage}`;
+          break;
+        case "wifi":
+          const wifiParts = content.split(",");
+          if (wifiParts.length >= 3) {
+            const ssid = wifiParts[0]?.trim() ?? "";
+            const wifiType = wifiParts[1]?.trim() ?? "";
+            const password = wifiParts[2]?.trim() ?? "";
+            const hidden = wifiParts[3]?.trim() === "true" ? "true" : "false";
+
+            formattedData = `WIFI:S:${ssid};T:${wifiType};P:${password};H:${hidden};`;
+          } else {
+            setFeedbackMessage(
+              "For Wi-Fi, please provide: SSID,Type (WEP/WPA/blank),Password,Hidden(true/false)",
+            );
+            setIsError(true);
+            return;
+          }
+          break;
+        case "url":
+          if (
+            !content.startsWith("http://") &&
+            !content.startsWith("https://")
+          ) {
+            formattedData = `https://${content}`;
+          }
+          break;
+        case "text":
+        default:
+          break;
+      }
+
+      try {
+        const result = await createQrCode({
+          data: formattedData,
+          type: type,
+          title: title,
+        });
+
+        if (result.success && result.qrCode) {
+          setGeneratedQrData(result.qrCode.data);
+          setGeneratedQrType(result.qrCode.type);
+          setQrContent("");
+          setQrTitle("");
+          setFeedbackMessage("QR Code generated and saved successfully!");
+          setUserQrCodes((prev) => [result.qrCode, ...prev]);
+        } else {
+          console.error(
+            "Failed to generate QR code:",
+            result.error,
+            result.details,
+          );
+          setFeedbackMessage(
+            result.error ?? "Failed to generate QR code. Please try again.",
+          );
+          setIsError(true);
+        }
+      } catch (error: unknown) {
+        console.error("Error generating QR code:", error);
+        let message = "An unexpected error occurred.";
+        if (error instanceof Error) {
+          message = error.message;
+        }
+        setFeedbackMessage(message);
+        setIsError(true);
+      }
+    },
+    [session?.user?.id], // Removed 'status' from dependencies as it's not used in the callback
+  );
+
+  const handleDelete = async (id: number) => {
+    setFeedbackMessage(null);
+    setIsError(false);
+    if (confirm("Are you sure you want to delete this QR code?")) {
+      try {
+        const result = await deleteQrCode(id);
+        if (result.success) {
+          setFeedbackMessage("QR Code deleted successfully!");
+          setUserQrCodes((prev) => prev.filter((code) => code.id !== id));
+        } else {
+          setFeedbackMessage(result.message ?? "Failed to delete QR code.");
+          setIsError(true);
+        }
+      } catch (error: unknown) {
+        console.error("Error deleting QR code:", error);
+        let message = "An unexpected error occurred during deletion.";
+        if (error instanceof Error) {
+          message = error.message;
+        }
+        setFeedbackMessage(message);
+        setIsError(true);
+      }
+    }
+  };
 
   // Fetch user's QR codes when session status changes to authenticated
   useEffect(() => {
@@ -60,66 +199,8 @@ export default function HomePage() {
         setUserQrCodes([]); // Clear codes if not authenticated
       }
     }
-    void fetchCodes(); // Call the async function
-  }, [status]); // Dependency array includes status to refetch on auth change
-
-  const handleSubmit = async (formData: FormData) => {
-    setFeedbackMessage(null);
-    setIsError(false);
-    try {
-      // Append the selected type to formData manually since Shadcn Select doesn't add a hidden input by default
-      formData.append("type", qrType);
-
-      const result = await createQrCode(formData);
-      if (result.success && result.qrCode) {
-        setGeneratedQrData(result.qrCode.data);
-        setGeneratedQrType(result.qrCode.type);
-        setQrContent(""); // Clear input after successful generation
-        setQrTitle("");
-        setFeedbackMessage("QR Code generated and saved successfully!");
-        setUserQrCodes((prev) => [result.qrCode!, ...prev]); // Add new QR to the top of the list
-      } else {
-        console.error(
-          "Failed to generate QR code:",
-          result.message,
-          result.errors,
-        );
-        setFeedbackMessage(
-          result.message || "Failed to generate QR code. Please try again.",
-        );
-        setIsError(true);
-      }
-    } catch (error: any) {
-      console.error("Error generating QR code:", error);
-      setFeedbackMessage(error.message || "An unexpected error occurred.");
-      setIsError(true);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    setFeedbackMessage(null);
-    setIsError(false);
-    // IMPORTANT: Do NOT use confirm() or window.confirm(). Use a custom modal UI instead.
-    // This is a temporary placeholder for demonstration.
-    if (confirm("Are you sure you want to delete this QR code?")) {
-      try {
-        const result = await deleteQrCode(id);
-        if (result.success) {
-          setFeedbackMessage("QR Code deleted successfully!");
-          setUserQrCodes((prev) => prev.filter((code) => code.id !== id));
-        } else {
-          setFeedbackMessage(result.message || "Failed to delete QR code.");
-          setIsError(true);
-        }
-      } catch (error: any) {
-        console.error("Error deleting QR code:", error);
-        setFeedbackMessage(
-          error.message || "An unexpected error occurred during deletion.",
-        );
-        setIsError(true);
-      }
-    }
-  };
+    void fetchCodes();
+  }, [status]);
 
   if (status === "loading") {
     return (
@@ -132,8 +213,6 @@ export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-4xl space-y-8">
-        {" "}
-        {/* Increased max-width for list */}
         <Card className="rounded-lg p-6 shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-bold">
@@ -147,7 +226,7 @@ export default function HomePage() {
             {session ? (
               <div className="flex flex-col items-center space-y-6">
                 <p className="text-lg text-gray-800">
-                  Welcome, {session.user?.name || "User"}!
+                  Welcome, {session.user?.name ?? "User"}!
                 </p>
                 <Button
                   onClick={() => void signOut()}
@@ -190,21 +269,15 @@ export default function HomePage() {
                   </div>
                   <div>
                     <Label htmlFor="type">QR Code Type</Label>
-                    <Select
-                      value={qrType}
-                      onValueChange={(value) =>
-                        setQrType(
-                          value as (typeof qrCodeTypeEnum.enumValues)[number],
-                        )
-                      } // Fix applied here
-                    >
+                    <Select value={qrType} onValueChange={handleQrTypeChange}>
                       <SelectTrigger className="mt-1 w-full">
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {qrCodeTypeEnum.enumValues.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                        {qrCodeTypeEnum.map((typeOption) => (
+                          <SelectItem key={typeOption} value={typeOption}>
+                            {typeOption.charAt(0).toUpperCase() +
+                              typeOption.slice(1)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -230,7 +303,7 @@ export default function HomePage() {
                 </h3>
                 {userQrCodes.length === 0 ? (
                   <p className="mt-4 text-gray-500">
-                    You haven't saved any QR codes yet. Generate one above!
+                    You haven&apos;t saved any QR codes yet. Generate one above!
                   </p>
                 ) : (
                   <div className="mt-6 grid w-full grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -241,7 +314,7 @@ export default function HomePage() {
                       >
                         <CardHeader className="w-full">
                           <CardTitle className="truncate text-lg">
-                            {qr.title || "Untitled QR Code"}
+                            {qr.title ?? "Untitled QR Code"}
                           </CardTitle>
                           <CardDescription className="mt-1 text-sm text-gray-500">
                             Type:{" "}
@@ -274,10 +347,10 @@ export default function HomePage() {
                   Please sign in to access the QR code generator features.
                 </p>
                 <Button
-                  onClick={() => void signIn()}
+                  onClick={() => void signIn("github")}
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  Sign in
+                  Sign in with GitHub
                 </Button>
               </div>
             )}
