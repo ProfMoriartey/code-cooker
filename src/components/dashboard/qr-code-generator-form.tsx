@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { qrCodeTypeEnum, type QrCodeType } from "~/lib/types"; // Import from shared types
+import { ColorPickerInput } from "../ui/color-picker-input";
 
 // A helper component for the submit button to show loading state
 function SubmitButton() {
@@ -116,23 +117,19 @@ export default function QrCodeGeneratorForm({
       {/* New color inputs */}
       <div className="flex gap-4">
         <div className="flex-1">
-          <Label htmlFor="fg-color">Foreground Color</Label>
-          <Input
-            id="fg-color"
-            type="color"
-            value={foregroundColor}
-            onChange={(e) => setForegroundColor(e.target.value)}
-            className="mt-1 h-10 w-full p-1"
+          <Label htmlFor="fg-color-picker">Foreground Color</Label>
+          <ColorPickerInput
+            color={foregroundColor}
+            onChange={setForegroundColor}
+            className="mt-1"
           />
         </div>
         <div className="flex-1">
-          <Label htmlFor="bg-color">Background Color</Label>
-          <Input
-            id="bg-color"
-            type="color"
-            value={backgroundColor}
-            onChange={(e) => setBackgroundColor(e.target.value)}
-            className="mt-1 h-10 w-full p-1"
+          <Label htmlFor="bg-color-picker">Background Color</Label>
+          <ColorPickerInput
+            color={backgroundColor}
+            onChange={setBackgroundColor}
+            className="mt-1"
           />
         </div>
       </div>

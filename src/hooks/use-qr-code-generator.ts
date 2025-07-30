@@ -68,6 +68,9 @@ export function useQrCodeGenerator() {
           data: formattedData,
           type: qrType,
           title: title,
+          // These are correctly passed
+          backgroundColor,
+          foregroundColor
         });
 
         if (result.success && result.qrCode) {
@@ -100,7 +103,7 @@ export function useQrCodeGenerator() {
         return null;
       }
     },
-    [qrType, session?.user?.id, status],
+    [qrType, session?.user?.id, status, foregroundColor, backgroundColor], // ADD foregroundColor and backgroundColor here
   );
 
   return {
@@ -113,9 +116,9 @@ export function useQrCodeGenerator() {
     generatedQrData,
     generatedQrType,
     feedbackMessage,
-    setFeedbackMessage, // Exporting the setter
+    setFeedbackMessage,
     isError,
-    setIsError, // Exporting the setter
+    setIsError,
     foregroundColor,
     setForegroundColor,
     backgroundColor,

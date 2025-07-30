@@ -101,6 +101,9 @@ export const qrCodes = createTable("qr_codes", {
   updatedAt: timestamp("updated_at")
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
+  foregroundColor: varchar("foreground_color", { length: 7 }).default("#000000").notNull(), // Store as #RRGGBB
+  backgroundColor: varchar("background_color", { length: 7 }).default("#FFFFFF").notNull(), // Store as #RRGGBB
+
 });
 
 // Define relationships (optional, but good practice for findMany with relations)

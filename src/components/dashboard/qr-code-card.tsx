@@ -31,6 +31,8 @@ export default function QrCodeCard({ qrCode, onDelete }: QrCodeCardProps) {
           initialData={qrCode.data}
           initialType={qrCode.type}
           size={150}
+          backgroundColor={qrCode.backgroundColor}
+          foregroundColor={qrCode.foregroundColor}
         />
         <div className="mt-4 flex w-full justify-center">
           <Button
