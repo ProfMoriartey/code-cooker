@@ -5,12 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, QrCode, List, Menu, X } from "lucide-react";
 import { useState } from "react";
-import AuthStatusAndActions from "~/components/dashboard/auth-status-and-actions"; // Import AuthStatusAndActions
-import type { Session } from "next-auth"; // Import Session type
-// Import Session type
+import AuthStatusAndActions from "~/components/dashboard/auth-status-and-actions";
+import type { Session } from "next-auth";
 
 interface SidebarProps {
-  session: Session | null; // Accept session as a prop
+  session: Session | null;
 }
 
 export default function Sidebar({ session }: SidebarProps) {
@@ -26,9 +25,9 @@ export default function Sidebar({ session }: SidebarProps) {
     },
     {
       name: "Saved QR Codes",
-      href: "/dashboard/saved",
+      href: "/dashboard/saved", // Corrected path to match your file structure
       icon: List,
-      isActive: pathname === "/dashboard/saved",
+      isActive: pathname === "/dashboard/saved", // Corrected path
     },
   ];
 
@@ -56,8 +55,6 @@ export default function Sidebar({ session }: SidebarProps) {
       {isMenuOpen && (
         <nav className="absolute top-[72px] left-0 z-10 w-full rounded-b-lg bg-white p-4 shadow-lg md:hidden">
           <ul className="mb-4 space-y-2">
-            {" "}
-            {/* Added margin-bottom */}
             {navItems.map((item) => (
               <li key={item.href}>
                 <Link href={item.href} passHref>
@@ -78,15 +75,15 @@ export default function Sidebar({ session }: SidebarProps) {
           </ul>
           {/* Auth status for mobile */}
           <div className="mt-4 border-t pt-4">
-            {" "}
-            {/* Separator for auth actions */}
             <AuthStatusAndActions session={session} />
           </div>
         </nav>
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="hidden w-64 flex-col rounded-r-lg bg-white p-4 shadow-md md:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 flex-col rounded-r-lg bg-white p-4 shadow-md md:flex">
+        {" "}
+        {/* Added h-screen and sticky top-0 */}
         <div className="mb-8 flex items-center gap-2 text-2xl font-bold text-gray-800">
           <Home className="h-6 w-6 text-indigo-600" /> Dashboard
         </div>
@@ -112,8 +109,6 @@ export default function Sidebar({ session }: SidebarProps) {
         </nav>
         {/* Auth status for desktop */}
         <div className="mt-auto border-t pt-4">
-          {" "}
-          {/* Pushes to bottom, adds top border */}
           <AuthStatusAndActions session={session} />
         </div>
       </aside>
