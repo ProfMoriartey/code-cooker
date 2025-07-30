@@ -79,7 +79,7 @@ export function QRCodeDisplay({
             options={{
               errorCorrectionLevel: "M",
               margin: 3,
-              scale: 4,
+              scale: 9,
               width: size,
               color: {
                 dark: foregroundColor, // Use the prop for foreground color

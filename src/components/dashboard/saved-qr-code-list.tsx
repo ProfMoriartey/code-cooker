@@ -14,13 +14,15 @@ import QrCodeCard from "~/components/dashboard/qr-code-card";
 interface SavedQrCodeListProps {
   userQrCodes: QRCode[];
   handleDelete: (id: number) => void;
-  onEdit: (qrCode: QRCode) => void; // New prop for edit functionality
+  onEdit: (qrCode: QRCode) => void;
+  onView: (qrCode: QRCode) => void; // New prop for viewing QR code
 }
 
 export default function SavedQrCodeList({
   userQrCodes,
   handleDelete,
-  onEdit, // Destructure new prop
+  onEdit,
+  onView, // Destructure new prop
 }: SavedQrCodeListProps) {
   return (
     <>
@@ -37,13 +39,14 @@ export default function SavedQrCodeList({
           </CardHeader>
         </Card>
       ) : (
-        <div className="mt-6 grid w-full grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid w-full grid-cols-1 gap-6 md:grid-cols-1 lg:grid-cols-2">
           {userQrCodes.map((qr) => (
             <QrCodeCard
               key={qr.id}
               qrCode={qr}
               onDelete={handleDelete}
-              onEdit={onEdit} // Pass the onEdit function down to QrCodeCard
+              onEdit={onEdit}
+              onView={onView} // Pass the onView function down to QrCodeCard
             />
           ))}
         </div>
