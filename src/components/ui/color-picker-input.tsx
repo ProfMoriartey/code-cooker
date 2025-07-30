@@ -17,12 +17,14 @@ interface ColorPickerInputProps {
   color: string;
   onChange: (color: string) => void;
   className?: string;
+  name?: string; // Added 'name' prop
 }
 
 export function ColorPickerInput({
   color,
   onChange,
   className,
+  name, // Destructure 'name' prop
 }: ColorPickerInputProps) {
   const [popoverOpen, setPopoverOpen] = React.useState(false);
 
@@ -62,6 +64,7 @@ export function ColorPickerInput({
         onChange={handleInputChange}
         className="w-24"
         placeholder="#RRGGBB"
+        name={name} // Pass the 'name' prop to the Input component
       />
     </div>
   );

@@ -5,10 +5,11 @@ import { auth } from "~/server/auth"; // Import the auth function
 import { db } from "~/server/db"; // Import your Drizzle database instance
 import { qrCodes } from "~/server/db/schema"; // Import your QR codes schema
 import { eq } from "drizzle-orm"; // Import Drizzle ORM functions
-import { type QrCodeType, type QRCode } from "~/lib/types"; // Import shared types
+import { QrCodeType, type QRCode } from "~/lib/types"; // Import shared types
+import { customAlphabet } from 'nanoid'; // For generating unique short codes
 
-// Define the input type for creating a QR code
-interface CreateQrCodeInput {
+// Define the input type for creating a static QR code
+interface CreateStaticQrCodeInput {
   data: string;
   type: QrCodeType;
   title: string | null;
@@ -16,8 +17,19 @@ interface CreateQrCodeInput {
   backgroundColor: string; // Add backgroundColor
 }
 
-// Server Action to create a new QR code
-export async function createQrCode(input: CreateQrCodeInput) {
+// Define the input type for creating a dynamic QR code
+interface CreateDynamicQrCodeInput {
+  title: string | null;
+  targetUrl: string; // The URL the dynamic QR code will redirect to
+  foregroundColor: string;
+  backgroundColor: string;
+}
+
+// Helper to generate a unique short code
+const generateShortCode = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 8);
+
+// Server Action to create a new static QR code
+export async function createQrCode(input: CreateStaticQrCodeInput) {
   const session = await auth();
   if (!session?.user?.id) {
     return { success: false, error: "Not authenticated.", details: null, qrCode: null };
@@ -31,8 +43,12 @@ export async function createQrCode(input: CreateQrCodeInput) {
         data: input.data,
         type: input.type,
         title: input.title,
-        foregroundColor: input.foregroundColor, // Pass foregroundColor to database
-        backgroundColor: input.backgroundColor, // Pass backgroundColor to database
+        foregroundColor: input.foregroundColor,
+        backgroundColor: input.backgroundColor,
+        isDynamic: false, // Mark as static
+        shortCode: null, // No short code for static
+        targetUrl: null, // No target URL for static
+        scanCount: 0, // No scan count for static
       })
       .returning();
 
@@ -41,7 +57,6 @@ export async function createQrCode(input: CreateQrCodeInput) {
     }
 
     // Ensure the returned newQrCode object fully matches the QRCode type including colors
-    // Drizzle's .returning() should give you all columns, including new ones
     const resultQrCode: QRCode = {
       ...newQrCode,
       createdAt: new Date(newQrCode.createdAt),
@@ -51,12 +66,58 @@ export async function createQrCode(input: CreateQrCodeInput) {
 
     return { success: true, qrCode: resultQrCode, error: null, details: null };
   } catch (error: unknown) {
-    console.error("Database error creating QR code:", error);
+    console.error("Database error creating static QR code:", error);
     let errorMessage = "An unknown database error occurred.";
     if (error instanceof Error) {
       errorMessage = error.message;
     }
     return { success: false, error: "Database error.", details: errorMessage, qrCode: null };
+  }
+}
+
+// Server Action to create a new dynamic QR code
+export async function createDynamicQrCode(input: CreateDynamicQrCodeInput): Promise<{ success: boolean; error: string | null; qrCode: QRCode | null }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Not authenticated.", qrCode: null };
+  }
+
+  const shortCode = generateShortCode(); // Generate a unique short code
+
+  try {
+    const [newQrCode] = await db
+      .insert(qrCodes)
+      .values({
+        userId: session.user.id,
+        data: shortCode, // Store the short code in the data field
+        type: QrCodeType.URL, // Dynamic QR codes will always be URLs (for redirection)
+        title: input.title,
+        foregroundColor: input.foregroundColor,
+        backgroundColor: input.backgroundColor,
+        isDynamic: true, // Mark as dynamic
+        shortCode: shortCode,
+        targetUrl: input.targetUrl,
+        scanCount: 0,
+      })
+      .returning();
+
+    if (!newQrCode) {
+      return { success: false, error: "Failed to create dynamic QR code.", qrCode: null };
+    }
+
+    const resultQrCode: QRCode = {
+      ...newQrCode,
+      createdAt: new Date(newQrCode.createdAt),
+    } as QRCode;
+
+    return { success: true, qrCode: resultQrCode, error: null };
+  } catch (error: unknown) {
+    console.error("Database error creating dynamic QR code:", error);
+    let errorMessage = "An unknown database error occurred.";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return { success: false, error: errorMessage, qrCode: null };
   }
 }
 
@@ -113,7 +174,7 @@ export async function deleteQrCode(id: number) {
   }
 }
 
-// New server action to update an existing QR code
+// Server Action to update an existing QR code
 export async function updateQrCode(updatedQrCode: QRCode): Promise<{ success: boolean; message: string }> {
   const session = await auth();
   if (!session?.user?.id) {
@@ -133,6 +194,10 @@ export async function updateQrCode(updatedQrCode: QRCode): Promise<{ success: bo
         type: updatedQrCode.type,
         foregroundColor: updatedQrCode.foregroundColor,
         backgroundColor: updatedQrCode.backgroundColor,
+        isDynamic: updatedQrCode.isDynamic, // Ensure this is passed
+        shortCode: updatedQrCode.shortCode, // Ensure this is passed
+        targetUrl: updatedQrCode.targetUrl, // Ensure this is passed
+        scanCount: updatedQrCode.scanCount, // Ensure this is passed
         // createdAt should not be updated here
         // If you have an 'updatedAt' field in your schema, you would set it here:
         // updatedAt: new Date(),

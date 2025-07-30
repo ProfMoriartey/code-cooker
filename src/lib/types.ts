@@ -7,13 +7,13 @@ export enum QrCodeType {
   WIFI = "wifi",
   EMAIL = "email",
   PHONE = "phone",
-  SMS = "sms", // Added SMS type
+  SMS = "sms",
   // Add other QR code types as needed
 }
 
 export type QRCode = {
   id: number;
-  data: string;
+  data: string; // For static, this is the content; for dynamic, it's the shortCode
   type: QrCodeType;
   title: string | null;
   foregroundColor: string;
@@ -21,4 +21,10 @@ export type QRCode = {
   createdAt: Date;
   // If you have an 'updatedAt' field in your schema, add it here:
   // updatedAt?: Date;
+
+  // New fields for dynamic QR codes
+  isDynamic: boolean;
+  shortCode: string | null; // The unique short identifier for dynamic QR codes
+  targetUrl: string | null; // The URL the dynamic QR code redirects to
+  scanCount: number; // Number of times the dynamic QR code has been scanned
 };
