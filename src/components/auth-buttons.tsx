@@ -12,29 +12,32 @@ export default function AuthButtons() {
     <div className="flex flex-col items-center gap-2">
       {session ? (
         <>
-          <p className="text-2xl text-white">
+          {/* Adjusted text color for better contrast on light background */}
+          <p className="text-lg text-gray-800">
             Welcome, {session.user?.name ?? "User"}!
           </p>
           <div className="flex gap-4">
             <Link href="/dashboard" passHref>
-              <Button className="rounded-lg bg-white/10 px-6 py-3 text-white hover:bg-white/20">
+              {/* Primary button style for "Go to Dashboard" */}
+              <Button className="rounded-lg bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700">
                 Go to Dashboard
               </Button>
             </Link>
+            {/* Secondary button style for "Sign out" */}
             <Button
               onClick={() => void signOut()}
-              className="rounded-lg bg-white/10 px-6 py-3 text-white hover:bg-white/20"
+              className="rounded-lg bg-gray-200 px-6 py-3 text-gray-800 hover:bg-gray-300"
             >
               Sign out
             </Button>
           </div>
         </>
       ) : (
-        // New button for generic sign-in page
+        // Primary button style for "Sign In"
         <div className="flex flex-col items-center gap-4">
           <Button
             onClick={() => void signIn()} // No provider specified, leads to providers list
-            className="rounded-lg bg-[hsl(280,100%,70%)] px-8 py-4 text-xl font-bold text-white hover:bg-[hsl(280,100%,60%)]"
+            className="rounded-lg bg-indigo-600 px-8 py-4 text-xl font-bold text-white hover:bg-indigo-700"
           >
             Sign In
           </Button>
