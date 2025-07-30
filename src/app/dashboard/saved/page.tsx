@@ -80,7 +80,7 @@ export default function SavedQrCodesPage() {
         setIsError(false);
         setEditingQrCode(null);
       } else {
-        setFeedbackMessage(result.message || "Failed to update QR code.");
+        setFeedbackMessage(result.message ?? "Failed to update QR code.");
         setIsError(true);
       }
     } catch (error) {
@@ -175,7 +175,7 @@ export default function SavedQrCodesPage() {
           <div className="flex justify-center p-4">
             {viewingQrCode && (
               <QRCodeDisplay
-                initialData={qrPopupData || ""} // Pass the correct data for the QR code
+                initialData={qrPopupData ?? ""} // Pass the correct data for the QR code
                 initialType={viewingQrCode.type}
                 size={250} // Larger size for popup
                 foregroundColor={viewingQrCode.foregroundColor}
