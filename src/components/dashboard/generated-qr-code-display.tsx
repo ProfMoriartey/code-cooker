@@ -7,11 +7,15 @@ import { type QrCodeType } from "~/lib/types"; // Import QrCodeType
 interface GeneratedQrCodeDisplayProps {
   generatedQrData: string;
   generatedQrType: QrCodeType;
+  foregroundColor?: string; // Add this new prop
+  backgroundColor?: string; // Add this new prop
 }
 
 export default function GeneratedQrCodeDisplay({
   generatedQrData,
   generatedQrType,
+  foregroundColor, // Destructure the prop
+  backgroundColor, // Destructure the prop
 }: GeneratedQrCodeDisplayProps) {
   if (!generatedQrData) {
     return null; // Don't render anything if no QR code has been generated yet
@@ -25,6 +29,8 @@ export default function GeneratedQrCodeDisplay({
       <QRCodeDisplay
         initialData={generatedQrData}
         initialType={generatedQrType}
+        foregroundColor={foregroundColor} // Pass to QRCodeDisplay
+        backgroundColor={backgroundColor} // Pass to QRCodeDisplay
       />
     </div>
   );

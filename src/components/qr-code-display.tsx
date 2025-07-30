@@ -10,18 +10,21 @@ interface QRCodeDisplayProps {
   initialData: string;
   initialType: QrCodeType;
   size?: number; // Optional size prop
+  foregroundColor?: string; // New prop for QR code color (hex string, e.g., "#000000" for black)
+  backgroundColor?: string; // New prop for QR code background color (hex string, e.g., "#FFFFFF" for white)
 }
 
 export function QRCodeDisplay({
   initialData,
-  initialType,
+  initialType, // Keep this, though not used directly for QR rendering, it's part of the `initial` state concept.
   size = 200, // Default size
+  foregroundColor = "#000000", // Default to black if not provided
+  backgroundColor = "#FFFFFF", // Default to white if not provided
 }: QRCodeDisplayProps) {
   const { Canvas } = useQRCode();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Effect to get the actual canvas DOM element once it's rendered
   useEffect(() => {
     if (containerRef.current) {
       const actualCanvas = containerRef.current.querySelector("canvas");
@@ -31,7 +34,7 @@ export function QRCodeDisplay({
         console.error("Canvas element not found within the container.");
       }
     }
-  }, [initialData, initialType, size]); // Re-run if QR code data or size changes
+  }, [initialData, initialType, size, foregroundColor, backgroundColor]); // Add colors to dependency array
 
   const handleDownload = useCallback(() => {
     if (canvasRef.current) {
@@ -79,11 +82,10 @@ export function QRCodeDisplay({
               scale: 4,
               width: size,
               color: {
-                dark: "#000000", // Black squares
-                light: "#FFFFFF", // White background
+                dark: foregroundColor, // Use the prop for foreground color
+                light: backgroundColor, // Use the prop for background color
               },
             }}
-            // className="rounded-lg" // Removed this line
           />
         ) : (
           <div

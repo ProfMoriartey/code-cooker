@@ -35,6 +35,10 @@ interface QrCodeGeneratorFormProps {
   handleSubmit: (formData: FormData) => Promise<void>;
   feedbackMessage: string | null;
   isError: boolean;
+  foregroundColor: string; // New prop for foreground color
+  setForegroundColor: (color: string) => void; // Setter for foreground color
+  backgroundColor: string; // New prop for background color
+  setBackgroundColor: (color: string) => void; // Setter for background color
 }
 
 export default function QrCodeGeneratorForm({
@@ -47,61 +51,93 @@ export default function QrCodeGeneratorForm({
   handleSubmit,
   feedbackMessage,
   isError,
+  foregroundColor, // Destructure new prop
+  setForegroundColor, // Destructure new prop
+  backgroundColor, // Destructure new prop
+  setBackgroundColor, // Destructure new prop
 }: QrCodeGeneratorFormProps) {
-  return (
-    <>
-      {feedbackMessage && (
-        <div
-          className={`mt-4 w-full rounded-md p-3 text-center ${isError ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
-        >
-          {feedbackMessage}
-        </div>
-      )}
+  // The feedbackMessage and isError are handled by FeedbackDisplay component in DashboardPage.
+  // So, they are not rendered directly within this component's JSX anymore.
 
-      <form action={handleSubmit} className="w-full space-y-4">
-        <div>
-          <Label htmlFor="title">QR Code Title (Optional)</Label>
+  return (
+    <form action={handleSubmit} className="w-full space-y-4">
+      <div>
+        <Label htmlFor="title">QR Code Title (Optional)</Label>
+        <Input
+          id="title"
+          name="title"
+          type="text"
+          placeholder="e.g., My Website Link"
+          value={qrTitle}
+          onChange={(e) => setQrTitle(e.target.value)}
+          className="mt-1"
+        />
+      </div>
+      <div>
+        <Label htmlFor="data">Content for QR Code</Label>
+        <Textarea
+          id="data"
+          name="data"
+          placeholder={
+            qrType === "email"
+              ? "email@example.com?subject=Hello&body=Message"
+              : qrType === "phone"
+                ? "1234567890"
+                : qrType === "sms"
+                  ? "1234567890?body=Hello"
+                  : qrType === "wifi"
+                    ? "SSID,Type,Password,Hidden(true/false)"
+                    : "Enter your content here"
+          }
+          value={qrContent}
+          onChange={(e) => setQrContent(e.target.value)}
+          className="mt-1 min-h-[100px]"
+        />
+      </div>
+      <div>
+        <Label htmlFor="type">QR Code Type</Label>
+        <Select
+          value={qrType}
+          onValueChange={(value) => setQrType(value as QrCodeType)}
+        >
+          <SelectTrigger className="mt-1 w-full">
+            <SelectValue placeholder="Select type" />
+          </SelectTrigger>
+          <SelectContent>
+            {qrCodeTypeEnum.map((typeOption) => (
+              <SelectItem key={typeOption} value={typeOption}>
+                {typeOption.charAt(0).toUpperCase() + typeOption.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* New color inputs */}
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <Label htmlFor="fg-color">Foreground Color</Label>
           <Input
-            id="title"
-            name="title"
-            type="text"
-            placeholder="e.g., My Website Link"
-            value={qrTitle}
-            onChange={(e) => setQrTitle(e.target.value)}
-            className="mt-1"
+            id="fg-color"
+            type="color"
+            value={foregroundColor}
+            onChange={(e) => setForegroundColor(e.target.value)}
+            className="mt-1 h-10 w-full p-1"
           />
         </div>
-        <div>
-          <Label htmlFor="data">Content for QR Code</Label>
-          <Textarea
-            id="data"
-            name="data"
-            placeholder="Enter text, a URL (e.g., https://example.com), email, phone number, etc."
-            value={qrContent}
-            onChange={(e) => setQrContent(e.target.value)}
-            className="mt-1 min-h-[100px]"
+        <div className="flex-1">
+          <Label htmlFor="bg-color">Background Color</Label>
+          <Input
+            id="bg-color"
+            type="color"
+            value={backgroundColor}
+            onChange={(e) => setBackgroundColor(e.target.value)}
+            className="mt-1 h-10 w-full p-1"
           />
         </div>
-        <div>
-          <Label htmlFor="type">QR Code Type</Label>
-          <Select
-            value={qrType}
-            onValueChange={(value) => setQrType(value as QrCodeType)} // Fix applied here
-          >
-            <SelectTrigger className="mt-1 w-full">
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent>
-              {qrCodeTypeEnum.map((typeOption) => (
-                <SelectItem key={typeOption} value={typeOption}>
-                  {typeOption.charAt(0).toUpperCase() + typeOption.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <SubmitButton />
-      </form>
-    </>
+      </div>
+
+      <SubmitButton />
+    </form>
   );
 }
