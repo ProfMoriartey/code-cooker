@@ -1,15 +1,24 @@
 // src/lib/types.ts
-export type QrCodeType = "text" | "url" | "email" | "phone" | "sms" | "wifi";
 
-export interface QRCode {
+// Define QrCodeType as an enum so its values are available at runtime
+export enum QrCodeType {
+  URL = "url",
+  TEXT = "text",
+  WIFI = "wifi",
+  EMAIL = "email",
+  PHONE = "phone",
+  SMS = "sms", // Added SMS type
+  // Add other QR code types as needed
+}
+
+export type QRCode = {
   id: number;
-  userId: string;
   data: string;
   type: QrCodeType;
   title: string | null;
+  foregroundColor: string;
+  backgroundColor: string;
   createdAt: Date;
-  foregroundColor: string; // Add this
-  backgroundColor: string; // Add this
-}
-
-export const qrCodeTypeEnum = ["text", "url", "email", "phone", "sms", "wifi"] as const;
+  // If you have an 'updatedAt' field in your schema, add it here:
+  // updatedAt?: Date;
+};

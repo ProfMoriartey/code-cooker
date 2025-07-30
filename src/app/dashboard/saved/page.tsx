@@ -2,11 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// Removed useSession and useRouter as layout handles authentication state
-// import { useSession } from "next-auth/react";
-// import { useRouter } from "next/navigation";
 
-import { getUserQrCodes } from "~/app/actions";
+import { getUserQrCodes, updateQrCode } from "~/app/actions"; // Import updateQrCode
 import {
   Card,
   CardContent,
@@ -19,16 +16,14 @@ import { type QRCode } from "~/lib/types";
 import SavedQrCodeList from "~/components/dashboard/saved-qr-code-list";
 import FeedbackDisplay from "~/components/shared/feedback-display";
 import DeleteConfirmationModal from "~/components/dashboard/delete-confirmation-modal";
+import QrCodeEditForm from "~/components/dashboard/qr-code-edit-form";
 import { useQrCodeDeletion } from "~/hooks/use-qr-code-deletion";
 
 export default function SavedQrCodesPage() {
-  // Removed session and status destructuring
-  // const { data: session, status } = useSession();
-  // const router = useRouter();
-
   const [userQrCodes, setUserQrCodes] = useState<QRCode[]>([]);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isError, setIsError] = useState<boolean>(false);
+  const [editingQrCode, setEditingQrCode] = useState<QRCode | null>(null);
 
   const {
     isDeleteModalOpen,
@@ -38,17 +33,8 @@ export default function SavedQrCodesPage() {
     cancelDelete,
   } = useQrCodeDeletion({ setFeedbackMessage, setIsError, setUserQrCodes });
 
-  // Removed useEffect for unauthenticated redirect as layout handles it
-  // useEffect(() => {
-  //   if (status === "unauthenticated") {
-  //     router.push("/");
-  //   }
-  // }, [status, router]);
-
   useEffect(() => {
     async function fetchCodes() {
-      // The page will only render if the user is authenticated,
-      // so we can directly fetch codes here.
       try {
         const codes = await getUserQrCodes();
         setUserQrCodes(codes);
@@ -59,20 +45,68 @@ export default function SavedQrCodesPage() {
       }
     }
     void fetchCodes();
-  }, []); // Empty dependency array as status is no longer a dependency here
+  }, []);
 
-  // Removed loading and unauthenticated checks as layout handles them
-  // if (status === "loading") {
-  //   return (
-  //     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-  //       <p className="text-xl text-gray-700">Loading session...</p>
-  //     </div>
-  //   );
-  // }
+  const handleEdit = (qrCode: QRCode) => {
+    setEditingQrCode(qrCode);
+  };
 
-  // if (status === "unauthenticated") {
-  //   return null;
-  // }
+  const handleSaveEdit = async (updatedQrCode: QRCode) => {
+    setFeedbackMessage("Saving changes...");
+    setIsError(false);
+
+    try {
+      const result = await updateQrCode(updatedQrCode); // Call the server action
+
+      if (result.success) {
+        // Update local state only if the database update was successful
+        setUserQrCodes((prevCodes) =>
+          prevCodes.map((qr) =>
+            qr.id === updatedQrCode.id ? updatedQrCode : qr,
+          ),
+        );
+        setFeedbackMessage(result.message);
+        setIsError(false);
+        setEditingQrCode(null); // Exit edit mode
+      } else {
+        setFeedbackMessage(result.message || "Failed to update QR code.");
+        setIsError(true);
+      }
+    } catch (error) {
+      console.error("Error saving QR code:", error);
+      setFeedbackMessage("An unexpected error occurred while saving.");
+      setIsError(true);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingQrCode(null);
+    setFeedbackMessage(null);
+    setIsError(false);
+  };
+
+  if (editingQrCode) {
+    return (
+      <div className="w-full max-w-4xl space-y-8">
+        <Card className="rounded-lg p-6 shadow-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold">Edit QR Code</CardTitle>
+            <CardDescription className="text-gray-600">
+              You are editing: {editingQrCode.title ?? "Untitled QR Code"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FeedbackDisplay message={feedbackMessage} isError={isError} />
+            <QrCodeEditForm
+              qrCode={editingQrCode}
+              onSave={handleSaveEdit}
+              onCancel={handleCancelEdit}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-4xl space-y-8">
@@ -90,9 +124,16 @@ export default function SavedQrCodesPage() {
           <SavedQrCodeList
             userQrCodes={userQrCodes}
             handleDelete={handleDeleteTrigger}
+            onEdit={handleEdit}
           />
         </CardContent>
       </Card>
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        itemName="QR code"
+      />
     </div>
   );
 }

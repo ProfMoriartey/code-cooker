@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { qrCodeTypeEnum, type QrCodeType } from "~/lib/types"; // Import from shared types
+import { QrCodeType } from "~/lib/types"; // Corrected import: import QrCodeType directly
 import { ColorPickerInput } from "../ui/color-picker-input";
 
 // A helper component for the submit button to show loading state
@@ -105,33 +105,37 @@ export default function QrCodeGeneratorForm({
             <SelectValue placeholder="Select type" />
           </SelectTrigger>
           <SelectContent>
-            {qrCodeTypeEnum.map((typeOption) => (
-              <SelectItem key={typeOption} value={typeOption}>
-                {typeOption.charAt(0).toUpperCase() + typeOption.slice(1)}
-              </SelectItem>
-            ))}
+            {Object.values(QrCodeType).map(
+              (
+                typeOption, // Corrected: Use Object.values(QrCodeType)
+              ) => (
+                <SelectItem key={typeOption} value={typeOption}>
+                  {typeOption.charAt(0).toUpperCase() + typeOption.slice(1)}
+                </SelectItem>
+              ),
+            )}
           </SelectContent>
         </Select>
       </div>
 
-      {/* New color inputs */}
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <Label htmlFor="fg-color-picker">Foreground Color</Label>
-          <ColorPickerInput
-            color={foregroundColor}
-            onChange={setForegroundColor}
-            className="mt-1"
-          />
-        </div>
-        <div className="flex-1">
-          <Label htmlFor="bg-color-picker">Background Color</Label>
-          <ColorPickerInput
-            color={backgroundColor}
-            onChange={setBackgroundColor}
-            className="mt-1"
-          />
-        </div>
+      {/* Foreground Color Input */}
+      <div>
+        <Label htmlFor="foregroundColor">Foreground Color</Label>
+        <ColorPickerInput // Using ColorPickerInput
+          color={foregroundColor}
+          onChange={setForegroundColor}
+          className="mt-1"
+        />
+      </div>
+
+      {/* Background Color Input */}
+      <div>
+        <Label htmlFor="backgroundColor">Background Color</Label>
+        <ColorPickerInput // Using ColorPickerInput
+          color={backgroundColor}
+          onChange={setBackgroundColor}
+          className="mt-1"
+        />
       </div>
 
       <SubmitButton />

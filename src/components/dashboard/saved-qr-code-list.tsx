@@ -1,25 +1,26 @@
 // src/components/dashboard/saved-qr-code-list.tsx
 "use client";
 
-// Remove unused imports
 import {
-  Card, // Keep Card for the overall empty state message or wrapper
+  Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { type QRCode } from "~/lib/types"; // Import QRCode type
-import QrCodeCard from "~/components/dashboard/qr-code-card"; // New import
+import { type QRCode } from "~/lib/types";
+import QrCodeCard from "~/components/dashboard/qr-code-card";
 
 interface SavedQrCodeListProps {
   userQrCodes: QRCode[];
   handleDelete: (id: number) => void;
+  onEdit: (qrCode: QRCode) => void; // New prop for edit functionality
 }
 
 export default function SavedQrCodeList({
   userQrCodes,
   handleDelete,
+  onEdit, // Destructure new prop
 }: SavedQrCodeListProps) {
   return (
     <>
@@ -28,8 +29,6 @@ export default function SavedQrCodeList({
       </h3>
       {userQrCodes.length === 0 ? (
         <Card className="mt-4 w-full max-w-lg p-6 text-center shadow-lg">
-          {" "}
-          {/* Added Card for empty state */}
           <CardHeader>
             <CardTitle>No Saved QR Codes</CardTitle>
             <CardDescription>
@@ -40,7 +39,12 @@ export default function SavedQrCodeList({
       ) : (
         <div className="mt-6 grid w-full grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {userQrCodes.map((qr) => (
-            <QrCodeCard key={qr.id} qrCode={qr} onDelete={handleDelete} />
+            <QrCodeCard
+              key={qr.id}
+              qrCode={qr}
+              onDelete={handleDelete}
+              onEdit={onEdit} // Pass the onEdit function down to QrCodeCard
+            />
           ))}
         </div>
       )}

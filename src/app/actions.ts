@@ -112,3 +112,45 @@ export async function deleteQrCode(id: number) {
     return { success: false, message: errorMessage };
   }
 }
+
+// New server action to update an existing QR code
+export async function updateQrCode(updatedQrCode: QRCode): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, message: "Not authenticated." };
+  }
+
+  if (!updatedQrCode.id) {
+    return { success: false, message: "QR code ID is missing for update." };
+  }
+
+  try {
+    const result = await db
+      .update(qrCodes)
+      .set({
+        title: updatedQrCode.title,
+        data: updatedQrCode.data,
+        type: updatedQrCode.type,
+        foregroundColor: updatedQrCode.foregroundColor,
+        backgroundColor: updatedQrCode.backgroundColor,
+        // createdAt should not be updated here
+        // If you have an 'updatedAt' field in your schema, you would set it here:
+        // updatedAt: new Date(),
+      })
+      .where(eq(qrCodes.id, updatedQrCode.id))
+      .returning({ id: qrCodes.id }); // Return the ID to confirm the update
+
+    if (result.length === 0) {
+      return { success: false, message: "QR code not found or you don't have permission to update it." };
+    }
+
+    return { success: true, message: "QR code updated successfully!" };
+  } catch (error: unknown) {
+    console.error("Database error updating QR code:", error);
+    let errorMessage = "An unknown database error occurred during update.";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return { success: false, message: errorMessage };
+  }
+}
