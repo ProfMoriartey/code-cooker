@@ -3,12 +3,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, QrCode, List, Menu, X } from "lucide-react"; // Added Menu and X icons
+import { Home, QrCode, List, Menu, X } from "lucide-react";
 import { useState } from "react";
+import AuthStatusAndActions from "~/components/dashboard/auth-status-and-actions"; // Import AuthStatusAndActions
+import type { Session } from "next-auth"; // Import Session type
+// Import Session type
 
-export default function Sidebar() {
+interface SidebarProps {
+  session: Session | null; // Accept session as a prop
+}
+
+export default function Sidebar({ session }: SidebarProps) {
   const pathname = usePathname();
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // State to manage menu open/close
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
     {
@@ -48,12 +55,14 @@ export default function Sidebar() {
       {/* Mobile Dropdown Menu */}
       {isMenuOpen && (
         <nav className="absolute top-[72px] left-0 z-10 w-full rounded-b-lg bg-white p-4 shadow-lg md:hidden">
-          <ul className="space-y-2">
+          <ul className="mb-4 space-y-2">
+            {" "}
+            {/* Added margin-bottom */}
             {navItems.map((item) => (
               <li key={item.href}>
                 <Link href={item.href} passHref>
                   <div
-                    onClick={() => setIsMenuOpen(false)} // Close menu on item click
+                    onClick={() => setIsMenuOpen(false)}
                     className={`flex items-center rounded-md p-3 text-lg font-medium transition-colors duration-200 ${
                       item.isActive
                         ? "bg-indigo-100 text-indigo-700 shadow-sm"
@@ -67,6 +76,12 @@ export default function Sidebar() {
               </li>
             ))}
           </ul>
+          {/* Auth status for mobile */}
+          <div className="mt-4 border-t pt-4">
+            {" "}
+            {/* Separator for auth actions */}
+            <AuthStatusAndActions session={session} />
+          </div>
         </nav>
       )}
 
@@ -95,6 +110,12 @@ export default function Sidebar() {
             ))}
           </ul>
         </nav>
+        {/* Auth status for desktop */}
+        <div className="mt-auto border-t pt-4">
+          {" "}
+          {/* Pushes to bottom, adds top border */}
+          <AuthStatusAndActions session={session} />
+        </div>
       </aside>
     </>
   );

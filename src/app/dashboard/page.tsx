@@ -1,9 +1,9 @@
 // src/app/dashboard/page.tsx
 "use client";
 
-import { useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+// Removed useSession and useRouter as layout handles authentication state
+// import { useSession } from "next-auth/react";
+// import { useRouter } from "next/navigation";
 
 import {
   Card,
@@ -15,13 +15,15 @@ import {
 
 import QrCodeGeneratorForm from "~/components/dashboard/qr-code-generator-form";
 import GeneratedQrCodeDisplay from "~/components/dashboard/generated-qr-code-display";
-import AuthStatusAndActions from "~/components/dashboard/auth-status-and-actions";
+// Removed AuthStatusAndActions as it's now in the sidebar
+// import AuthStatusAndActions from "~/components/dashboard/auth-status-and-actions";
 import FeedbackDisplay from "~/components/shared/feedback-display";
 import { useQrCodeGenerator } from "~/hooks/use-qr-code-generator";
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  // Removed session and status destructuring
+  // const { data: session, status } = useSession();
+  // const router = useRouter();
 
   const {
     qrContent,
@@ -47,23 +49,25 @@ export default function DashboardPage() {
     await generateQrCode(formData);
   };
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
+  // Removed useEffect for unauthenticated redirect as layout handles it
+  // useEffect(() => {
+  //   if (status === "unauthenticated") {
+  //     router.push("/");
+  //   }
+  // }, [status, router]);
 
-  if (status === "loading") {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-        <p className="text-xl text-gray-700">Loading session...</p>
-      </div>
-    );
-  }
+  // Removed loading and unauthenticated checks as layout handles them
+  // if (status === "loading") {
+  //   return (
+  //     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+  //       <p className="text-xl text-gray-700">Loading session...</p>
+  //     </div>
+  //   );
+  // }
 
-  if (status === "unauthenticated") {
-    return null;
-  }
+  // if (status === "unauthenticated") {
+  //   return null;
+  // }
 
   return (
     <div className="w-full max-w-4xl space-y-8">
@@ -78,7 +82,8 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center space-y-6">
-            <AuthStatusAndActions session={session} />
+            {/* Removed AuthStatusAndActions */}
+            {/* <AuthStatusAndActions session={session} /> */}
 
             <FeedbackDisplay message={feedbackMessage} isError={isError} />
 
