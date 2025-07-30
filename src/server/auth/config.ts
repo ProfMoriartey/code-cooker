@@ -1,8 +1,9 @@
 // src/server/auth/config.ts
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { type DefaultSession, type NextAuthConfig } from "next-auth";
+import { type DefaultSession } from "next-auth";
+import type { NextAuthConfig } from "next-auth";
 import GitHub from "next-auth/providers/github";
-
+import Google from "@auth/core/providers/google";
 import { db } from "~/server/db";
 import {
   accounts,
@@ -10,7 +11,7 @@ import {
   users,
   verificationTokens,
 } from "~/server/db/schema";
-import { env } from "~/env"; // <--- Add this import
+import { env } from "~/env";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -26,7 +27,6 @@ declare module "next-auth" {
       // role: UserRole;
     } & DefaultSession["user"];
   }
-
   // interface User {
   //   // ...other properties
   //   // role: UserRole;
@@ -40,9 +40,20 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    GitHub({ // <--- Pass configuration to GitHub provider
+    GitHub({
       clientId: env.AUTH_GITHUB_ID,
       clientSecret: env.AUTH_GITHUB_SECRET,
+    }),
+    Google({ // Added Google Provider
+      clientId: env.AUTH_GOOGLE_ID, // Ensure you have this in your .env
+      clientSecret: env.AUTH_GOOGLE_SECRET, // Ensure you have this in your .env
+      checks: ['pkce', 'state'], // Explicitly set checks to resolve type error
+      // Optional: Force a refresh token every time (useful if you need it consistently)
+      // authorization: {
+      //   params: {
+      //     prompt: "consent",
+      //   },
+      // },
     }),
     /**
      * ...add more providers here.
