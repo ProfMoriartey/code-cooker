@@ -64,7 +64,7 @@ export default function QrCodeEditForm({
       ...qrCode, // Keep existing ID and other properties
       title,
       // Conditional data and type based on isDynamic
-      data: qrCode.isDynamic ? qrCode.shortCode || "" : content, // For dynamic, 'data' is the shortCode
+      data: qrCode.isDynamic ? (qrCode.shortCode ?? "") : content, // For dynamic, 'data' is the shortCode
       type: qrCode.isDynamic ? QrCodeType.URL : type, // For dynamic, 'type' is always URL
       targetUrl: qrCode.isDynamic ? targetUrl : null, // Only set targetUrl if dynamic
       foregroundColor,

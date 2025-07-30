@@ -1,5 +1,5 @@
 // src/lib/qr-code-formatter.ts
-import { type QrCodeType } from "~/lib/types"; // Ensure this import path is correct
+import { QrCodeType } from "~/lib/types"; // Ensure this import path is correct
 
 /**
  * Formats raw QR code content based on its type.
@@ -19,16 +19,18 @@ export function formatQrCodeData(
   let error: string | null = null;
 
   switch (qrType) {
-    case "email":
+    case QrCodeType.EMAIL:
       const emailParts = content.split("?");
       const emailAddress = emailParts[0];
       const emailParams = emailParts.length > 1 ? `?${emailParts[1]}` : "";
       formattedData = `mailto:${emailAddress}${emailParams}`;
       break;
-    case "phone":
+
+    case QrCodeType.PHONE:
       formattedData = `tel:${content.replace(/\D/g, "")}`;
       break;
-    case "sms":
+
+    case QrCodeType.SMS:
       const smsIndex = content.indexOf("?");
       const smsNumber = content
         .substring(0, smsIndex === -1 ? content.length : smsIndex)
@@ -37,26 +39,28 @@ export function formatQrCodeData(
         smsIndex !== -1 ? `?${content.substring(smsIndex + 1)}` : "";
       formattedData = `sms:${smsNumber}${smsMessage}`;
       break;
-    case "wifi":
+
+    case QrCodeType.WIFI:
       const wifiParts = content.split(",");
       if (wifiParts.length >= 3) {
         const ssid = wifiParts[0]?.trim() ?? "";
         const wifiType = wifiParts[1]?.trim() ?? "";
         const password = wifiParts[2]?.trim() ?? "";
         const hidden = wifiParts[3]?.trim() === "true" ? "true" : "false";
-
         formattedData = `WIFI:S:${ssid};T:${wifiType};P:${password};H:${hidden};`;
       } else {
         error =
           "For Wi-Fi, provide: SSID,Type (WEP/WPA/blank),Password,Hidden(true/false)";
       }
       break;
-    case "url":
+
+    case QrCodeType.URL:
       if (!content.startsWith("http://") && !content.startsWith("https://")) {
         formattedData = `https://${content}`;
       }
       break;
-    case "text":
+
+    case QrCodeType.TEXT:
     default:
       break;
   }

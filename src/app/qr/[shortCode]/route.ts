@@ -7,10 +7,11 @@ import { eq } from 'drizzle-orm';
 // This API route handles dynamic QR code redirections
 export async function GET(
   request: Request,
-  { params }: { params: { shortCode: string } }
+  { params }: { params: Promise<{ shortCode: string }> }
 ) {
-  const { shortCode } = params;
-
+  // Await the params since they're now a Promise
+  const { shortCode } = await params;
+  
   if (!shortCode) {
     return new NextResponse('Short code is missing.', { status: 400 });
   }
@@ -34,7 +35,6 @@ export async function GET(
 
     // Redirect to the target URL
     return NextResponse.redirect(qrCodeEntry.targetUrl);
-
   } catch (error) {
     console.error(`Error handling dynamic QR code redirect for ${shortCode}:`, error);
     return new NextResponse('Internal Server Error.', { status: 500 });

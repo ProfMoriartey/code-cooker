@@ -65,6 +65,22 @@ export default function QrCodeGeneratorForm({
     setTargetUrl(e.target.value); // Just update the state with the raw input
   };
 
+  // Helper function to get placeholder text based on QR type
+  const getPlaceholderText = () => {
+    switch (qrType) {
+      case QrCodeType.EMAIL:
+        return "email@example.com?subject=Hello&body=Message";
+      case QrCodeType.PHONE:
+        return "1234567890";
+      case QrCodeType.SMS:
+        return "1234567890?body=Hello";
+      case QrCodeType.WIFI:
+        return "SSID,Type,Password,Hidden(true/false)";
+      default:
+        return "Enter your content here";
+    }
+  };
+
   return (
     <form action={handleSubmit} className="w-full space-y-4">
       {/* Hidden inputs for dynamic properties, will be included in FormData */}
@@ -117,17 +133,7 @@ export default function QrCodeGeneratorForm({
             <Textarea
               id="data"
               name="data"
-              placeholder={
-                qrType === "email"
-                  ? "email@example.com?subject=Hello&body=Message"
-                  : qrType === "phone"
-                    ? "1234567890"
-                    : qrType === "sms"
-                      ? "1234567890?body=Hello"
-                      : qrType === "wifi"
-                        ? "SSID,Type,Password,Hidden(true/false)"
-                        : "Enter your content here"
-              }
+              placeholder={getPlaceholderText()}
               value={qrContent}
               onChange={(e) => setQrContent(e.target.value)}
               className="mt-1 min-h-[100px]"
