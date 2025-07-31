@@ -5,6 +5,6 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = { images: { domains: ["utfs.io", "placehold.co"] }};
 
 export default config;
