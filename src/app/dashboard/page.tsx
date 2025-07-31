@@ -35,9 +35,8 @@ export default function DashboardPage() {
     generatedQrData,
     generatedQrType,
     feedbackMessage,
-    setFeedbackMessage,
+
     isError,
-    setIsError,
     foregroundColor,
     setForegroundColor,
     backgroundColor,

@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { type QRCode, QrCodeType } from "~/lib/types"; // Ensure QrCodeType is imported for QRCodeDisplay
+import { type QRCode } from "~/lib/types"; // Ensure QrCodeType is imported for QRCodeDisplay
 
 import SavedQrCodeList from "~/components/dashboard/saved-qr-code-list";
 import FeedbackDisplay from "~/components/shared/feedback-display";
@@ -38,7 +38,7 @@ export default function SavedQrCodesPage() {
 
   const {
     isDeleteModalOpen,
-    qrCodeToDeleteId,
+
     handleDeleteTrigger,
     confirmDelete,
     cancelDelete,

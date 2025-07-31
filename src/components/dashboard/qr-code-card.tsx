@@ -6,9 +6,17 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter, // Import CardFooter
 } from "~/components/ui/card";
-import { type QRCode } from "~/lib/types";
-import { QrCode as QrCodeIcon } from "lucide-react"; // Import QrCode icon
+import { type QRCode } from "~/lib/types"; // Ensure this path is correct for your QRCode type
+import {
+  QrCode as QrCodeIcon,
+  Pencil,
+  Trash2,
+  Link,
+  Scan,
+  Eye,
+} from "lucide-react"; // Import QrCode, Pencil, Trash2, Link, Scan, Eye icons
 
 type QrCodeCardProps = {
   qrCode: QRCode;
@@ -25,78 +33,120 @@ export default function QrCodeCard({
 }: QrCodeCardProps) {
   return (
     // Make the entire card clickable for viewing, add cursor-pointer
-    <Card
-      className="relative flex cursor-pointer flex-col items-center justify-between rounded-lg p-6 shadow-md transition-shadow duration-200 hover:shadow-lg"
-      onClick={() => onView(qrCode)} // Handle card click to view QR code
-    >
-      {/* QR Code Icon for visual cue */}
-      <div className="absolute top-4 right-4 text-gray-400 transition-colors duration-200 hover:text-indigo-600">
-        <QrCodeIcon size={52} />
-      </div>
-
-      <CardHeader className="w-full pb-2">
-        <CardTitle className="truncate text-lg">
-          {qrCode.title ?? "Untitled QR Code"}
-        </CardTitle>
-        <CardDescription className="mt-1 text-sm text-gray-500">
-          Type: {qrCode.type.charAt(0).toUpperCase() + qrCode.type.slice(1)}{" "}
-          {qrCode.isDynamic && (
-            <span className="font-semibold text-indigo-600">(Dynamic)</span>
-          )}
-        </CardDescription>
+    <Card className="relative flex flex-col overflow-hidden rounded-lg shadow-md transition-shadow duration-200 hover:shadow-lg">
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-1">
+        {" "}
+        {/* Reduced padding */}
+        <div className="space-y-0.5">
+          {" "}
+          {/* Reduced space-y */}
+          <CardTitle className="flex items-center gap-2 text-lg font-bold">
+            {" "}
+            {/* Reduced font size */}
+            <QrCodeIcon className="h-5 w-5 text-indigo-600" />{" "}
+            {/* Reduced icon size */}
+            <span className="truncate">
+              {qrCode.title ?? "Untitled QR Code"}
+            </span>
+          </CardTitle>
+          <CardDescription className="text-xs text-gray-500">
+            {" "}
+            {/* Reduced font size */}
+            Type: {qrCode.type.charAt(0).toUpperCase() +
+              qrCode.type.slice(1)}{" "}
+            {qrCode.isDynamic && (
+              <span className="font-semibold text-indigo-600">(Dynamic)</span>
+            )}
+          </CardDescription>
+        </div>
+        {/* View button as part of the header for quick access */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent card click
+            onView(qrCode);
+          }}
+          className="ml-auto h-7 w-7 text-gray-400 hover:text-indigo-600" // Reduced button size
+          aria-label="View QR Code"
+        >
+          <Eye className="h-4 w-4" /> {/* Reduced icon size */}
+        </Button>
       </CardHeader>
 
-      {/* Main content area: details on left, buttons on right (PC) / stacked (mobile) */}
-      {/* Added min-h-[120px] for consistent card dimensions */}
-      <CardContent className="flex min-h-[120px] w-full flex-1 flex-col py-4 md:flex-row md:items-start md:justify-between">
-        {/* QR Code Details Section - always on the left / top */}
-        <div className="mb-4 w-full flex-1 space-y-1 text-center text-sm text-gray-700 md:mb-0 md:pr-4 md:text-left">
+      <CardContent className="flex flex-1 flex-col justify-between p-4 pt-1">
+        {" "}
+        {/* Reduced padding */}
+        {/* QR Code Details Section */}
+        <div className="mb-3 space-y-1.5 text-sm text-gray-700">
+          {" "}
+          {/* Reduced margin-bottom and space-y */}
           {qrCode.isDynamic ? (
             <>
-              <p>
+              <div className="flex items-center">
+                <Link className="mr-2 h-4 w-4 text-gray-500" />
                 <span className="font-medium">Target URL:</span>{" "}
-                <span className="block truncate text-blue-600">
+                <a
+                  href={qrCode.targetUrl ?? "#"} // Added nullish coalescing to provide a fallback empty string
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-1 truncate text-blue-600 hover:underline"
+                  onClick={(e) => e.stopPropagation()} // Prevent card click when clicking link
+                >
                   {qrCode.targetUrl}
-                </span>
-              </p>
-              <p>
+                </a>
+              </div>
+              <div className="flex items-center">
+                <QrCodeIcon className="mr-2 h-4 w-4 text-gray-500" />
                 <span className="font-medium">Short Code:</span>{" "}
-                <span className="block truncate">{qrCode.shortCode}</span>
-              </p>
-              <p>
-                <span className="font-medium">Scans:</span> {qrCode.scanCount}
-              </p>
+                <span className="ml-1 truncate">{qrCode.shortCode}</span>
+              </div>
+              <div className="flex items-center">
+                <Scan className="mr-2 h-4 w-4 text-gray-500" />
+                <span className="font-medium">Scans:</span>{" "}
+                <span className="ml-1">{qrCode.scanCount}</span>
+              </div>
             </>
           ) : (
             <>
-              <p>
+              <div className="flex items-start">
+                <QrCodeIcon className="mt-0.5 mr-2 h-4 w-4 text-gray-500" />
                 <span className="font-medium">Content:</span>{" "}
-                <span className="block truncate">{qrCode.data}</span>
-              </p>
+                <span className="ml-1 line-clamp-2">{qrCode.data}</span>{" "}
+                {/* Use line-clamp for long static content */}
+              </div>
             </>
           )}
         </div>
-
-        {/* Action Buttons - aligned to the right / bottom */}
-        <div
-          className="flex w-full flex-shrink-0 justify-center gap-2 md:w-auto md:justify-end"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Button
-            onClick={() => onEdit(qrCode)}
-            variant="outline"
-            className="flex-1 px-3 py-1 text-sm md:flex-none"
-          >
-            Edit
-          </Button>
-          <Button
-            onClick={() => onDelete(qrCode.id)}
-            className="flex-1 bg-red-500 px-3 py-1 text-sm hover:bg-red-600 md:flex-none"
-          >
-            Delete
-          </Button>
-        </div>
       </CardContent>
+
+      <CardFooter className="flex justify-end gap-2 p-4 pt-0">
+        {" "}
+        {/* Reduced padding */}
+        {/* Action Buttons */}
+        <Button
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent card click
+            onEdit(qrCode);
+          }}
+          variant="outline"
+          className="flex-1 items-center gap-1 px-3 py-1.5 text-xs md:flex-none" // Reduced padding and font size
+        >
+          <Pencil className="h-3.5 w-3.5" /> {/* Reduced icon size */}
+          Edit
+        </Button>
+        <Button
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent card click
+            onDelete(qrCode.id);
+          }}
+          variant="destructive" // Use destructive variant for delete
+          className="flex-1 items-center gap-1 px-3 py-1.5 text-xs md:flex-none" // Reduced padding and font size
+        >
+          <Trash2 className="h-3.5 w-3.5" /> {/* Reduced icon size */}
+          Delete
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

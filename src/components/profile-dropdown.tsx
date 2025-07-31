@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useSession, signIn, signOut } from "next-auth/react"; // Import useSession, signIn, and signOut
 import { useRouter } from "next/navigation"; // For navigation
+import Image from "next/image"; // Import Next.js Image component
 
 import {
   DropdownMenu,
@@ -29,13 +30,16 @@ export default function ProfileDropdown() {
   // Function to handle user sign out
   const handleSignOut = async () => {
     console.log("Signing out...");
-    await signOut({ callbackUrl: "/" }); // Sign out and redirect to home page
+    // Await signOut to ensure the promise is handled.
+    // The void operator is used here to explicitly indicate that the promise's return value is intentionally ignored.
+    void (await signOut({ callbackUrl: "/" })); // Sign out and redirect to home page
   };
 
   // Function to handle user sign in
   const handleSignIn = () => {
     console.log("Signing in...");
-    signIn(); // Trigger NextAuth.js sign-in flow
+    // The void operator is used here to explicitly indicate that the promise's return value is intentionally ignored.
+    void signIn(); // Trigger NextAuth.js sign-in flow
   };
 
   // Show loading state while session is being fetched
@@ -81,13 +85,15 @@ export default function ProfileDropdown() {
         >
           {/* Display user image if available, otherwise a generic User icon */}
           {session.user?.image ? (
-            <div className="h-full w-full overflow-hidden rounded-full">
+            <div className="relative h-full w-full overflow-hidden rounded-full">
               {" "}
               {/* Added a div wrapper for better circular clipping */}
-              <img
+              <Image
                 src={session.user.image}
                 alt="User Avatar"
-                className="h-full w-full object-cover" // object-cover is on the image
+                fill // Fills the parent container
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Optimize image loading
+                className="object-cover" // object-cover is on the image
               />
             </div>
           ) : (
@@ -103,7 +109,7 @@ export default function ProfileDropdown() {
       >
         {/* DropdownMenuLabel: Used for non-interactive labels, like the user's name and email. */}
         <DropdownMenuLabel className="px-2 py-1 font-semibold text-gray-900 dark:text-white">
-          {session.user?.name || "User"} {/* Display user's name */}
+          {session.user?.name ?? "User"} {/* Display user's name */}
           {session.user?.email && (
             <p className="truncate text-sm font-normal text-gray-500 dark:text-gray-400">
               {session.user.email} {/* Display user's email */}
