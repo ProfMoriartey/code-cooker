@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "QR Code Generator",
-  description: "Generate and save QR codes",
+  title: "QR Code Cooker",
+  description: "Generate and save QR codes fast and simple",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
