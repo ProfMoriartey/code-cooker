@@ -105,7 +105,7 @@ export async function getMultiPageSetById(id: number) {
           },
         },
       });
-      return set || null;
+      return set ?? null;
     } catch (error) {
       console.error("Error fetching multi-page set:", error);
       return null;

@@ -23,7 +23,7 @@ export default function SavedLinkPages() {
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    fetchPages();
+    void fetchPages();
   }, []);
 
   const fetchPages = async () => {

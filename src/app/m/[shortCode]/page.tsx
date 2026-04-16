@@ -7,21 +7,24 @@ import Link from "next/link";
 import { Link as LinkIcon } from "lucide-react";
 
 interface PublicPageProps {
-  params: {
-    shortCode: string;
-  };
-}
-
-export default async function PublicMultiPage({ params }: PublicPageProps) {
-  // Fetch the page data and its related links directly from the database
-  const pageData = await db.query.multiPageSets.findFirst({
-    where: eq(multiPageSets.shortCode, params.shortCode),
-    with: {
-      items: {
-        orderBy: [asc(multiPageItems.sortOrder)],
+    params: Promise<{
+      shortCode: string;
+    }>;
+  }
+  
+  export default async function PublicMultiPage({ params }: PublicPageProps) {
+    // Await the parameters to extract the short code
+    const resolvedParams = await params;
+    
+    // Fetch the page data and its related links directly from the database
+    const pageData = await db.query.multiPageSets.findFirst({
+      where: eq(multiPageSets.shortCode, resolvedParams.shortCode),
+      with: {
+        items: {
+          orderBy: [asc(multiPageItems.sortOrder)],
+        },
       },
-    },
-  });
+    });
 
   // Return a 404 error if the page does not exist
   if (!pageData) {

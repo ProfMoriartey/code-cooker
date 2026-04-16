@@ -91,7 +91,7 @@ export default function QrCodeGeneratorForm({
     const selectedSet = multiPageSets.find((set) => set.id.toString() === value);
     if (selectedSet) {
       // Use the environment variable, fallback to window.location.origin if it is missing
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "");
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== "undefined" ? window.location.origin : "");
       
       // Ensure there are no double slashes by cleaning the appUrl
       const cleanAppUrl = appUrl.endsWith("/") ? appUrl.slice(0, -1) : appUrl;
@@ -220,7 +220,7 @@ export default function QrCodeGeneratorForm({
                   </SelectContent>
                 </Select>
                 <p className="mt-1 text-sm text-gray-500">
-                  Helps scanners understand the QR code's purpose.
+                  Helps scanners understand the QR code&apos;s purpose.
                 </p>
               </div>
             </>

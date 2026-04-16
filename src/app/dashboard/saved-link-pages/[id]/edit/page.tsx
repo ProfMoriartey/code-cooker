@@ -1,7 +1,7 @@
 // src/app/dashboard/saved-link-pages/[id]/edit/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -23,17 +23,18 @@ interface LinkItem {
   url: string;
 }
 
-export default function EditLinkPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
-  const pageId = parseInt(params.id, 10);
-
-  const [title, setTitle] = useState("");
-  const [links, setLinks] = useState<LinkItem[]>([{ label: "", url: "" }]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const [isError, setIsError] = useState(false);
-
+export default function EditLinkPage({ params }: { params: Promise<{ id: string }> }) {
+    const unwrappedParams = use(params);
+    const router = useRouter();
+    const pageId = parseInt(unwrappedParams.id, 10);
+  
+    const [title, setTitle] = useState("");
+    const [links, setLinks] = useState<LinkItem[]>([{ label: "", url: "" }]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+    const [isError, setIsError] = useState(false);
+    
   useEffect(() => {
     async function loadData() {
       if (isNaN(pageId)) return;
