@@ -1,6 +1,6 @@
 // src/hooks/use-qr-code-deletion.ts
 import { useState, useCallback } from "react";
-import { deleteQrCode } from "~/app/actions"; // Your Server Action
+import { deleteQrCode } from "~/app/actions/qr-codes"; // Your Server Action
 import { type QRCode } from "~/lib/types"; // Import QRCode type if needed for filtering
 
 type SetFeedbackMessage = (message: string | null) => void;

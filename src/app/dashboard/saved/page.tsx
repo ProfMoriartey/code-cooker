@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 
-import { getUserQrCodes, updateQrCode } from "~/app/actions";
+import { getUserQrCodes, updateQrCode } from "~/app/actions/qr-codes";
 import {
   Card,
   CardContent,

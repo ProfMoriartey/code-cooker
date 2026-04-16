@@ -8,13 +8,13 @@ import {
   timestamp,
   integer,
   primaryKey,
-  boolean, // Import boolean type
+  boolean,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 export const createTable = pgTableCreator((name) => `qrgen_${name}`);
 
-// --- Auth.js Schema (from next-auth/drizzle-adapter expectations) ---
+// --- Auth.js Schema ---
 export const users = createTable("user", {
   id: varchar("id", { length: 255 }).notNull().primaryKey(),
   name: varchar("name", { length: 255 }),
@@ -85,7 +85,7 @@ export const qrCodes = createTable("qr_codes", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 255 }),
-  data: text("data").notNull(), // The actual content of the QR code (for static) or the shortCode (for dynamic)
+  data: text("data").notNull(),
   type: varchar("type", { length: 50, enum: qrCodeTypeEnum }).notNull(),
   createdAt: timestamp("created_at")
     .default(sql`CURRENT_TIMESTAMP`)
@@ -95,19 +95,44 @@ export const qrCodes = createTable("qr_codes", {
     .notNull(),
   foregroundColor: varchar("foreground_color", { length: 7 }).default("#000000").notNull(),
   backgroundColor: varchar("background_color", { length: 7 }).default("#FFFFFF").notNull(),
-
-  // New fields for dynamic QR codes
-  isDynamic: boolean("is_dynamic").default(false).notNull(), // Flag to indicate if it's dynamic
-  shortCode: varchar("short_code", { length: 255 }).unique(), // Unique short identifier for dynamic QR codes
-  targetUrl: text("target_url"), // The URL the dynamic QR code redirects to
-  scanCount: integer("scan_count").default(0).notNull(), // Number of times the dynamic QR code has been scanned
+  isDynamic: boolean("is_dynamic").default(false).notNull(),
+  shortCode: varchar("short_code", { length: 255 }).unique(),
+  targetUrl: text("target_url"),
+  scanCount: integer("scan_count").default(0).notNull(),
 });
 
-// Define relationships (optional, but good practice for findMany with relations)
+// --- Multi-Page Features ---
+export const multiPageSets = createTable("multi_page_sets", {
+  id: serial("id").primaryKey(),
+  userId: varchar("userId", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 255 }).notNull(),
+  shortCode: varchar("short_code", { length: 255 }).unique().notNull(),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export const multiPageItems = createTable("multi_page_items", {
+  id: serial("id").primaryKey(),
+  setId: integer("set_id")
+    .notNull()
+    .references(() => multiPageSets.id, { onDelete: "cascade" }),
+  label: varchar("label", { length: 255 }).notNull(),
+  url: text("url").notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+});
+
+// --- Relationships ---
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),
   qrCodes: many(qrCodes),
+  multiPageSets: many(multiPageSets), 
 }));
 
 export const qrCodesRelations = relations(qrCodes, ({ one }) => ({
@@ -117,6 +142,25 @@ export const qrCodesRelations = relations(qrCodes, ({ one }) => ({
   }),
 }));
 
-// Infer types from Drizzle schema for use in application
+export const multiPageSetsRelations = relations(multiPageSets, ({ one, many }) => ({
+  user: one(users, {
+    fields: [multiPageSets.userId],
+    references: [users.id],
+  }),
+  items: many(multiPageItems),
+}));
+
+export const multiPageItemsRelations = relations(multiPageItems, ({ one }) => ({
+  set: one(multiPageSets, {
+    fields: [multiPageItems.setId],
+    references: [multiPageSets.id],
+  }),
+}));
+
+// --- Type Exports ---
 export type QRCode = typeof qrCodes.$inferSelect;
 export type NewQRCode = typeof qrCodes.$inferInsert;
+export type MultiPageSet = typeof multiPageSets.$inferSelect;
+export type NewMultiPageSet = typeof multiPageSets.$inferInsert;
+export type MultiPageItem = typeof multiPageItems.$inferSelect;
+export type NewMultiPageItem = typeof multiPageItems.$inferInsert;

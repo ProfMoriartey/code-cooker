@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { QrCodeType, type QRCode } from "~/lib/types";
 import { formatQrCodeData } from "~/lib/qr-code-formatter";
-import { createQrCode, createDynamicQrCode } from "~/app/actions"; // Import createDynamicQrCode
+import { createQrCode, createDynamicQrCode } from "~/app/actions/qr-codes"; // Import createDynamicQrCode
 
 export function useQrCodeGenerator() {
   const { data: session, status } = useSession();

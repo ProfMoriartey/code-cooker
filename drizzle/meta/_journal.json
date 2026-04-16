@@ -15,6 +15,13 @@
       "when": 1753864415455,
       "tag": "0001_gifted_venom",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776345193717,
+      "tag": "0002_sudden_may_parker",
+      "breakpoints": true
     }
   ]
 }

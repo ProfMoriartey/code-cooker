@@ -28,3 +28,22 @@ export type QRCode = {
   targetUrl: string | null; // The URL the dynamic QR code redirects to
   scanCount: number; // Number of times the dynamic QR code has been scanned
 };
+
+// --- Multi-Page (Link-in-Bio) Types ---
+
+export type MultiPageSet = {
+  id: number;
+  userId: string;
+  title: string;
+  shortCode: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type MultiPageItem = {
+  id: number;
+  setId: number;
+  label: string;
+  url: string;
+  sortOrder: number;
+};

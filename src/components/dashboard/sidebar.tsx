@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, QrCode, List, Menu, X } from "lucide-react";
+import { Home, QrCode, List, Menu, X, Layers, Library } from "lucide-react"; // Imported Layers icon
 import { useState } from "react";
 import AuthStatusAndActions from "~/components/dashboard/auth-status-and-actions";
 import type { Session } from "next-auth";
@@ -25,9 +25,21 @@ export default function Sidebar({ session }: SidebarProps) {
     },
     {
       name: "Saved QR Codes",
-      href: "/dashboard/saved", // Corrected path to match your file structure
+      href: "/dashboard/saved",
       icon: List,
-      isActive: pathname === "/dashboard/saved", // Corrected path
+      isActive: pathname === "/dashboard/saved",
+    },
+    {
+      name: "Link Pages",
+      href: "/dashboard/link-pages",
+      icon: Layers,
+      isActive: pathname === "/dashboard/link-pages",
+    },
+    {
+      name: "Saved Link Pages",
+      href: "/dashboard/saved-link-pages",
+      icon: Library,
+      isActive: pathname === "/dashboard/saved-link-pages",
     },
   ];
 
@@ -82,8 +94,6 @@ export default function Sidebar({ session }: SidebarProps) {
 
       {/* Desktop Sidebar */}
       <aside className="sticky top-0 hidden h-screen w-64 flex-col rounded-r-lg bg-white p-4 shadow-md md:flex">
-        {" "}
-        {/* Added h-screen and sticky top-0 */}
         <div className="mb-8 flex items-center gap-2 text-2xl font-bold text-gray-800">
           <Home className="h-6 w-6 text-indigo-600" /> Dashboard
         </div>
