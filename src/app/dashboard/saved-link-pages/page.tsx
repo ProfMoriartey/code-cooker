@@ -56,7 +56,7 @@ export default function SavedLinkPages() {
   };
 
   const handleCopyLink = async (shortCode: string) => {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
     const cleanAppUrl = appUrl.endsWith("/") ? appUrl.slice(0, -1) : appUrl;
     const fullUrl = `${cleanAppUrl}/m/${shortCode}`;
 
