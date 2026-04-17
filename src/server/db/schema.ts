@@ -109,6 +109,10 @@ export const multiPageSets = createTable("multi_page_sets", {
     .references(() => users.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 255 }).notNull(),
   shortCode: varchar("short_code", { length: 255 }).unique().notNull(),
+  backgroundColor: varchar("background_color", { length: 7 }).default("#F9FAFB").notNull(),
+  buttonColor: varchar("button_color", { length: 7 }).default("#FFFFFF").notNull(),
+  buttonHoverColor: varchar("button_hover_color", { length: 7 }).default("#4F46E5").notNull(),
+  textColor: varchar("text_color", { length: 7 }).default("#111827").notNull(),
   createdAt: timestamp("created_at")
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),

@@ -36,6 +36,10 @@ export type MultiPageSet = {
   userId: string;
   title: string;
   shortCode: string;
+  backgroundColor: string;
+  buttonColor: string;
+  buttonHoverColor: string;
+  textColor: string;
   createdAt: Date;
   updatedAt: Date;
 };
