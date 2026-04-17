@@ -1,7 +1,7 @@
 // src/app/dashboard/saved-link-pages/[id]/edit/page.tsx
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -17,6 +17,7 @@ import { Plus, Trash2, Link as LinkIcon, ArrowLeft } from "lucide-react";
 import { getMultiPageSetById, updateMultiPageSet } from "~/app/actions/multi-pages";
 import FeedbackDisplay from "~/components/shared/feedback-display";
 import Link from "next/link";
+import { ColorPickerInput } from "~/components/ui/color-picker-input";
 
 interface LinkItem {
   label: string;
@@ -24,17 +25,23 @@ interface LinkItem {
 }
 
 export default function EditLinkPage({ params }: { params: Promise<{ id: string }> }) {
-    const unwrappedParams = use(params);
-    const router = useRouter();
-    const pageId = parseInt(unwrappedParams.id, 10);
+  const unwrappedParams = use(params);
+  const router = useRouter();
+  const pageId = parseInt(unwrappedParams.id, 10);
+
+  const [title, setTitle] = useState("");
+  const [links, setLinks] = useState<LinkItem[]>([{ label: "", url: "" }]);
   
-    const [title, setTitle] = useState("");
-    const [links, setLinks] = useState<LinkItem[]>([{ label: "", url: "" }]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-    const [isError, setIsError] = useState(false);
-    
+  const [backgroundColor, setBackgroundColor] = useState("#F9FAFB");
+  const [buttonColor, setButtonColor] = useState("#FFFFFF");
+  const [buttonHoverColor, setButtonHoverColor] = useState("#4F46E5");
+  const [textColor, setTextColor] = useState("#111827");
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
+
   useEffect(() => {
     async function loadData() {
       if (isNaN(pageId)) return;
@@ -43,7 +50,11 @@ export default function EditLinkPage({ params }: { params: Promise<{ id: string 
       
       if (data) {
         setTitle(data.title);
-        // Cast the returned items to match the LinkItem interface
+        setBackgroundColor(data.backgroundColor);
+        setButtonColor(data.buttonColor);
+        setButtonHoverColor(data.buttonHoverColor);
+        setTextColor(data.textColor);
+
         if (data.items && data.items.length > 0) {
           setLinks(data.items.map(item => ({ label: item.label, url: item.url })));
         } else {
@@ -91,12 +102,12 @@ export default function EditLinkPage({ params }: { params: Promise<{ id: string 
     setIsSubmitting(true);
 
     try {
-      const result = await updateMultiPageSet(pageId, title, validLinks);
+      const colors = { backgroundColor, buttonColor, buttonHoverColor, textColor };
+      const result = await updateMultiPageSet(pageId, title, validLinks, colors);
 
       if (result.success) {
         setFeedbackMessage(result.message);
         setIsError(false);
-        // Redirect back to the saved pages list after successful edit
         setTimeout(() => router.push("/dashboard/saved-link-pages"), 1500);
       } else {
         setFeedbackMessage(result.message || "Failed to update page.");
@@ -199,6 +210,28 @@ export default function EditLinkPage({ params }: { params: Promise<{ id: string 
                 <Plus className="mr-2 h-5 w-5" /> Add Another Link
               </Button>
             )}
+
+            <div className="pt-6 border-t border-gray-200 mt-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Appearance</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label className="mb-1 block">Background Color</Label>
+                  <ColorPickerInput color={backgroundColor} onChange={setBackgroundColor} name="backgroundColor" />
+                </div>
+                <div>
+                  <Label className="mb-1 block">Text Color</Label>
+                  <ColorPickerInput color={textColor} onChange={setTextColor} name="textColor" />
+                </div>
+                <div>
+                  <Label className="mb-1 block">Button Color</Label>
+                  <ColorPickerInput color={buttonColor} onChange={setButtonColor} name="buttonColor" />
+                </div>
+                <div>
+                  <Label className="mb-1 block">Button Hover Color</Label>
+                  <ColorPickerInput color={buttonHoverColor} onChange={setButtonHoverColor} name="buttonHoverColor" />
+                </div>
+              </div>
+            </div>
 
             <Button
               type="submit"

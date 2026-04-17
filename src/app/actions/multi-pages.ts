@@ -31,7 +31,16 @@ export async function getUserMultiPageSets(): Promise<MultiPageSet[]> {
   }
 }
 
-export async function createMultiPageSet(title: string, links: { label: string; url: string }[]) {
+export async function createMultiPageSet(
+  title: string, 
+  links: { label: string; url: string }[],
+  colors: {
+    backgroundColor: string;
+    buttonColor: string;
+    buttonHoverColor: string;
+    textColor: string;
+  }
+) {
   const session = await auth();
   if (!session?.user?.id) return { success: false, message: "Not authenticated." };
 
@@ -46,6 +55,10 @@ export async function createMultiPageSet(title: string, links: { label: string; 
       userId: session.user.id,
       title: title,
       shortCode: shortCode,
+      backgroundColor: colors.backgroundColor,
+      buttonColor: colors.buttonColor,
+      buttonHoverColor: colors.buttonHoverColor,
+      textColor: colors.textColor,
     }).returning();
 
     if (!newSet) return { success: false, message: "Failed to create the page." };
@@ -113,7 +126,17 @@ export async function getMultiPageSetById(id: number) {
   }
   
   // Update the title and links for a specific page
-  export async function updateMultiPageSet(id: number, title: string, links: { label: string; url: string }[]) {
+  export async function updateMultiPageSet(
+    id: number, 
+    title: string, 
+    links: { label: string; url: string }[],
+    colors: {
+      backgroundColor: string;
+      buttonColor: string;
+      buttonHoverColor: string;
+      textColor: string;
+    }
+  ) {
     const session = await auth();
     if (!session?.user?.id) return { success: false, message: "Not authenticated." };
   
@@ -122,19 +145,23 @@ export async function getMultiPageSetById(id: number) {
     }
   
     try {
-      // Verify ownership and update the title
       const [updatedSet] = await db
         .update(multiPageSets)
-        .set({ title, updatedAt: new Date() })
+        .set({ 
+          title, 
+          backgroundColor: colors.backgroundColor,
+          buttonColor: colors.buttonColor,
+          buttonHoverColor: colors.buttonHoverColor,
+          textColor: colors.textColor,
+          updatedAt: new Date() 
+        })
         .where(and(eq(multiPageSets.id, id), eq(multiPageSets.userId, session.user.id)))
         .returning();
   
       if (!updatedSet) return { success: false, message: "Page not found or unauthorized." };
   
-      // Delete existing links to cleanly apply changes
       await db.delete(multiPageItems).where(eq(multiPageItems.setId, id));
   
-      // Insert the updated link list
       if (links.length > 0) {
         const itemsToInsert = links.map((link, index) => ({
           setId: id,

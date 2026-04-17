@@ -15,42 +15,41 @@ import {
 import { Plus, Trash2, Link as LinkIcon } from "lucide-react";
 import { createMultiPageSet } from "~/app/actions/multi-pages";
 import FeedbackDisplay from "~/components/shared/feedback-display";
-
+import { ColorPickerInput } from "~/components/ui/color-picker-input";
 
 interface LinkItem {
-    label: string;
-    url: string;
-  }
+  label: string;
+  url: string;
+}
+
+export default function LinkPagesBuilder() {
+  const [title, setTitle] = useState("");
+  const [links, setLinks] = useState<LinkItem[]>([{ label: "", url: "" }]);
   
-  export default function LinkPagesBuilder() {
-    const [title, setTitle] = useState("");
-    
-    // Force strict typing on the state
-    const [links, setLinks] = useState<LinkItem[]>([{ label: "", url: "" }]); 
-    
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-    const [isError, setIsError] = useState(false);
-  
-    const handleAddLink = () => {
-      if (links.length < 10) {
-        setLinks([...links, { label: "", url: "" }]);
-      }
-    };
-  
-    const handleRemoveLink = (indexToRemove: number) => {
-      setLinks(links.filter((_, index) => index !== indexToRemove));
-    };
-  
-    // Change "field" type to keyof LinkItem
-    const handleLinkChange = (index: number, field: keyof LinkItem, value: string) => {
-        const updatedLinks = [...links];
-        
-        // Add "as LinkItem" to assure TypeScript the structure is intact
-        updatedLinks[index] = { ...updatedLinks[index], [field]: value } as LinkItem;
-        
-        setLinks(updatedLinks);
-      };
+  const [backgroundColor, setBackgroundColor] = useState("#F9FAFB");
+  const [buttonColor, setButtonColor] = useState("#FFFFFF");
+  const [buttonHoverColor, setButtonHoverColor] = useState("#4F46E5");
+  const [textColor, setTextColor] = useState("#111827");
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
+
+  const handleAddLink = () => {
+    if (links.length < 10) {
+      setLinks([...links, { label: "", url: "" }]);
+    }
+  };
+
+  const handleRemoveLink = (indexToRemove: number) => {
+    setLinks(links.filter((_, index) => index !== indexToRemove));
+  };
+
+  const handleLinkChange = (index: number, field: keyof LinkItem, value: string) => {
+    const updatedLinks = [...links];
+    updatedLinks[index] = { ...updatedLinks[index], [field]: value } as LinkItem;
+    setLinks(updatedLinks);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,20 +62,23 @@ interface LinkItem {
       return;
     }
 
-    // Filter out completely empty links to prevent saving blank rows
     const validLinks = links.filter((link) => link.label.trim() !== "" || link.url.trim() !== "");
 
     setIsSubmitting(true);
 
     try {
-      const result = await createMultiPageSet(title, validLinks);
+      const colors = { backgroundColor, buttonColor, buttonHoverColor, textColor };
+      const result = await createMultiPageSet(title, validLinks, colors);
 
       if (result.success) {
         setFeedbackMessage(`Success! Your page is created. Short code: ${result.shortCode}`);
         setIsError(false);
-        // Reset form
         setTitle("");
         setLinks([{ label: "", url: "" }]);
+        setBackgroundColor("#F9FAFB");
+        setButtonColor("#FFFFFF");
+        setButtonHoverColor("#4F46E5");
+        setTextColor("#111827");
       } else {
         setFeedbackMessage(result.message || "Failed to create page.");
         setIsError(true);
@@ -103,7 +105,6 @@ interface LinkItem {
           <FeedbackDisplay message={feedbackMessage} isError={isError} />
 
           <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-            {/* Page Title */}
             <div>
               <Label htmlFor="page-title" className="mb-1 block font-semibold text-gray-700">
                 Page Title
@@ -118,7 +119,6 @@ interface LinkItem {
               />
             </div>
 
-            {/* Links Container */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label className="font-semibold text-gray-700">Your Links</Label>
@@ -161,7 +161,6 @@ interface LinkItem {
               ))}
             </div>
 
-            {/* Add Link Button */}
             {links.length < 10 && (
               <Button
                 type="button"
@@ -173,7 +172,28 @@ interface LinkItem {
               </Button>
             )}
 
-            {/* Submit Button */}
+            <div className="pt-6 border-t border-gray-200 mt-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Appearance</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label className="mb-1 block">Background Color</Label>
+                  <ColorPickerInput color={backgroundColor} onChange={setBackgroundColor} name="backgroundColor" />
+                </div>
+                <div>
+                  <Label className="mb-1 block">Text Color</Label>
+                  <ColorPickerInput color={textColor} onChange={setTextColor} name="textColor" />
+                </div>
+                <div>
+                  <Label className="mb-1 block">Button Color</Label>
+                  <ColorPickerInput color={buttonColor} onChange={setButtonColor} name="buttonColor" />
+                </div>
+                <div>
+                  <Label className="mb-1 block">Button Hover Color</Label>
+                  <ColorPickerInput color={buttonHoverColor} onChange={setButtonHoverColor} name="buttonHoverColor" />
+                </div>
+              </div>
+            </div>
+
             <Button
               type="submit"
               disabled={isSubmitting}

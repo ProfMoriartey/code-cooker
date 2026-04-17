@@ -7,45 +7,47 @@ import Link from "next/link";
 import { Link as LinkIcon } from "lucide-react";
 
 interface PublicPageProps {
-    params: Promise<{
-      shortCode: string;
-    }>;
-  }
-  
-  export default async function PublicMultiPage({ params }: PublicPageProps) {
-    // Await the parameters to extract the short code
-    const resolvedParams = await params;
-    
-    // Fetch the page data and its related links directly from the database
-    const pageData = await db.query.multiPageSets.findFirst({
-      where: eq(multiPageSets.shortCode, resolvedParams.shortCode),
-      with: {
-        items: {
-          orderBy: [asc(multiPageItems.sortOrder)],
-        },
-      },
-    });
+  params: Promise<{
+    shortCode: string;
+  }>;
+}
 
-  // Return a 404 error if the page does not exist
+export default async function PublicMultiPage({ params }: PublicPageProps) {
+  const resolvedParams = await params;
+
+  const pageData = await db.query.multiPageSets.findFirst({
+    where: eq(multiPageSets.shortCode, resolvedParams.shortCode),
+    with: {
+      items: {
+        orderBy: [asc(multiPageItems.sortOrder)],
+      },
+    },
+  });
+
   if (!pageData) {
     notFound();
   }
 
+  const dynamicStyles = {
+    "--page-bg": pageData.backgroundColor,
+    "--page-text": pageData.textColor,
+    "--btn-bg": pageData.buttonColor,
+    "--btn-hover": pageData.buttonHoverColor,
+  } as React.CSSProperties;
+
   return (
-    <main className="flex min-h-screen flex-col items-center bg-gray-50 py-16 px-4 sm:px-6">
+    <main
+      style={dynamicStyles}
+      className="flex min-h-screen flex-col items-center bg-[var(--page-bg)] py-16 px-4 sm:px-6 transition-colors duration-300"
+    >
       <div className="w-full max-w-md space-y-8">
         
-        {/* Page Header */}
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-indigo-100 shadow-sm">
-            <span className="text-3xl font-bold text-indigo-600">
-              {pageData.title.charAt(0).toUpperCase()}
-            </span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">{pageData.title}</h1>
+          <h1 className="text-2xl font-bold text-[var(--page-text)]">
+            {pageData.title}
+          </h1>
         </div>
 
-        {/* Links List */}
         <div className="flex flex-col space-y-4 mt-8">
           {pageData.items.map((item) => (
             <Link
@@ -53,9 +55,9 @@ interface PublicPageProps {
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative flex w-full items-center justify-center rounded-xl bg-white p-4 text-center text-lg font-medium text-gray-800 shadow-sm transition-all hover:scale-105 hover:bg-indigo-600 hover:text-white hover:shadow-md border border-gray-200"
+              className="group relative flex w-full items-center justify-center rounded-xl bg-[var(--btn-bg)] p-4 text-center text-lg font-medium text-[var(--page-text)] shadow-sm transition-all duration-300 hover:scale-105 hover:bg-[var(--btn-hover)] hover:text-white hover:shadow-md border border-black/5"
             >
-              <span className="absolute left-4 text-gray-400 group-hover:text-indigo-200">
+              <span className="absolute left-4 text-[var(--page-text)] opacity-50 transition-colors duration-300 group-hover:text-white group-hover:opacity-100">
                 <LinkIcon size={20} />
               </span>
               {item.label}
@@ -63,17 +65,11 @@ interface PublicPageProps {
           ))}
           
           {pageData.items.length === 0 && (
-            <p className="text-center text-gray-500">No links added to this page yet.</p>
+            <p className="text-center text-[var(--page-text)] opacity-70">
+              No links added to this page yet.
+            </p>
           )}
         </div>
-
-        {/* Branding Footer */}
-        <div className="pt-12 text-center">
-          <Link href="/" className="text-sm font-semibold text-gray-400 hover:text-indigo-600 transition-colors">
-            Powered by QRGen
-          </Link>
-        </div>
-
       </div>
     </main>
   );
